@@ -29,6 +29,8 @@ function Query(data, options) {
 
   this.params.query = []
 
+  this.params.sort = Object.create(null)
+
   // {field, value, expression, relation}
 }
 
@@ -39,18 +41,15 @@ const QP = Query.prototype
 
 
 QP.skip = function (skip) {
-  // todo 验证skip
-  this.params.skip = skip || 0
+  this.params.skip = _.isInteger(skip) ? skip : 0
   return this
 }
 
 
 QP.limit = function (limit) {
-  // todo 验证limit
-  this.params.limit = limit || 0
+  this.params.limit = _.isInteger(limit) ? limit : 1
   return this
 }
-
 
 QP.where = function (field, condition, expression = 'eq', relation = 'and') {
   if (!_.isString(field) || _.isEmpty(field)) {
@@ -76,6 +75,15 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
   return this
 }
 
+QP.asc = function (fields) {
+  _sort.call(this, fields, 'asc')
+  return this
+}
+
+QP.desc = function (fields) {
+  _sort.call(this, fields, 'desc')
+  return this
+}
 
 
 
@@ -86,6 +94,8 @@ QP.find = function () {
   let { params, target, size } = this
   let { query } = params
   let result = []
+  // sort
+
   // 匹配where
   target.forEach(item => {
     let res = where(item, query)
@@ -93,7 +103,7 @@ QP.find = function () {
       result.push(item)
     }
   })
-  
+
   
   console.log(result)
 
@@ -110,7 +120,7 @@ function where(data, queries) {
     let { _f: field, _c: cond, _e: exp, _r: rel } = query
     let value = getValue(field, data)
     // todo exists
-    let res = isMatch(value, exp, cond)
+    let res = matchWhere(value, exp, cond)
     // 上一个的结果跟其的并集或者交集
     result = (rel === 'or') ? (result || res) : (result && res)
     // if (result === false) {
@@ -122,7 +132,8 @@ function where(data, queries) {
 }
 
 
-function isMatch(value, expression, condition) {
+
+function matchWhere(value, expression, condition) {
   let res = true
   switch (expression) {
     case 'like':
@@ -152,6 +163,23 @@ function isMatch(value, expression, condition) {
   }
   return res 
 }
+
+
+/**
+ * 私有方法，统一处理 asc/desc
+ * @param {String| Array} fields 
+ * @param {String} type 
+ */
+function _sort (fields, type) {
+  if (_.isString(fields)) {
+    fields = [fields]
+  }
+  if (_.isArray(fields) ) {
+    fields.forEach(field => this.params.sort[field] = type)
+  }
+}
+
+
 
 /**
  * 根据path路径从object中取值
