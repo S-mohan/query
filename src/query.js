@@ -94,6 +94,7 @@ QP.find = function () {
     }
   })
   
+  
   console.log(result)
 
 }
@@ -112,18 +113,12 @@ function where(data, queries) {
     let res = isMatch(value, exp, cond)
     // 上一个的结果跟其的并集或者交集
     result = (rel === 'or') ? (result || res) : (result && res)
-
-    if (result === false) {
-      break
-    }
+    // if (result === false) {
+    //   break
+    // }
   }
 
   return result
-  // queries.forEach(item => {
-  //   let { _f: field, _c: cond, _e: exp, _r: rel } = item
-  //   let value = getValue(field, data)
-
-  // })
 }
 
 

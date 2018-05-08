@@ -5,7 +5,7 @@ module.exports = {
   entry: './src/query.js',
   output: {
     filename: 'query.js',
-    path: path.resolve(__dirname, './dist'),
+    path: path.resolve(__dirname, './build'),
     library: 'Query',
     libraryTarget: 'umd',
     libraryExport: 'default',
