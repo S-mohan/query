@@ -1,0 +1,12 @@
+{
+  "extends": "standard",
+  "plugins": [
+    "html"
+  ],
+  "rules": {
+    "no-console":"off",
+    "no-debugger":"off",
+    "no-var":"warn",
+    "no-multiple-empty-lines":["error", {"max":4}]
+  }
+}

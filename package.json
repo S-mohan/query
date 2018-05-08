@@ -4,7 +4,10 @@
   "description": "SQL like data query",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "lint": "eslint --ext .js src/",
+    "lint-fix": "eslint --fix --ext .js src/"
   },
   "repository": {
     "type": "git",
@@ -20,5 +23,21 @@
   "bugs": {
     "url": "https://github.com/S-mohan/query/issues"
   },
-  "homepage": "https://github.com/S-mohan/query#readme"
+  "homepage": "https://github.com/S-mohan/query#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^12.0.0-alpha.0",
+    "eslint-plugin-html": "^4.0.3",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "string-replace-loader": "^2.1.1",
+    "webpack": "^4.8.1",
+    "webpack-cli": "^2.1.3"
+  }
 }

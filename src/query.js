@@ -1,35 +1,62 @@
 
 
-class Query {
-
-  constructor(data) { 
-    
+function Query (data) {
+  if (!(this instanceof Query)) {
+    return new Query(data)
   }
 
-  static version = '__VERSION__'
+  if (!Array.isArray(data)) {
+    // todo
+  }
 
-  // where
-  where() { }
+  this.source = data
 
-  like() { }
+  this.target = null
 
-  in() { }
+  this.sorts = Object.create(null)
 
-  between() { }
+  this.take = Object.create(null)
 
-  skip() { }
-
-  limit() { }
-
-  desc() { }
-
-  asc() { }
-
-  groupby()
-
-  find() { }
-
-  findOne() { }
-
-  destroy() { }
+  this.query = Object.create(null)
 }
+
+Query.version = '__VERSION__'
+
+// 原型
+const QP = Query.prototype
+
+
+QP.skip = function () {}
+
+
+QP.limit = function () {}
+
+//   // where
+//   where() { }
+
+//   like() { }
+
+//   in() { }
+
+//   between() { }
+
+//   skip() { }
+
+//   limit() { }
+
+//   desc() { }
+
+//   asc() { }
+
+//   groupby()
+
+//   find() { }
+
+//   findOne() { }
+
+//   destroy() { }
+
+
+const query = Query([])
+
+console.log(query)
