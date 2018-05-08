@@ -1,0 +1,24 @@
+{
+  "name": "query",
+  "version": "1.0.0",
+  "description": "SQL like data query",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/S-mohan/query.git"
+  },
+  "keywords": [
+    "sql",
+    "query",
+    "data"
+  ],
+  "author": "smohan <https://smohan.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/S-mohan/query/issues"
+  },
+  "homepage": "https://github.com/S-mohan/query#readme"
+}
