@@ -119,8 +119,6 @@ QP.find = function () {
 }
 
 
-
-
 /**
  * 重置数据和参数
  * @public
@@ -277,6 +275,10 @@ function _parseSort (data) {
 }
 
 
+/**
+ * @private
+ * 处理并返回结果集
+ */
 function _query () {
   let { target } = this
   let { skip, limit } = this.params
