@@ -22,18 +22,7 @@ function Query (data, options) {
 
   this.source = data
 
-  this.target = clone(data)
-
-  this.size = data.length
-
-  this.params = Object.create(null)
-
-  this.params.query = []
-
-  // sort 涉及到规则的先后顺序，因此使用数组存储
-  this.params.sort = []
-
-  // {field, value, expression, relation}
+  this.reset()
 }
 
 Query.version = '__VERSION__'
@@ -43,16 +32,25 @@ const QP = Query.prototype
 
 
 QP.skip = function (skip) {
-  this.params.skip = _.isInteger(skip) ? skip : 0
+  this.params.skip = (_.isInteger(skip) && skip > 0) ? skip : 0
   return this
 }
 
 
 QP.limit = function (limit) {
-  this.params.limit = _.isInteger(limit) ? limit : 1
+  this.params.limit = _.isInteger(limit) ? Math.abs(limit) : void 0
   return this
 }
 
+
+/**
+ * where
+ * @public
+ * @param {String} field
+ * @param {Primitive} condition
+ * @param {String} expression
+ * @param {String} relation and | or
+ */
 QP.where = function (field, condition, expression = 'eq', relation = 'and') {
   if (!_.isString(field) || _.isEmpty(field)) {
     return this
@@ -61,8 +59,8 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
     throw new TypeError('Query: 参数condition必须是一个基本类型值')
   }
   expression = expression.toLocaleLowerCase()
-  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'eq'
   relation = relation.toLocaleLowerCase()
+  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'eq'
   relation = ~RELATION.indexOf(relation) ? relation : 'and'
   const query = {
     _f: field,
@@ -77,6 +75,13 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
   return this
 }
 
+
+/**
+ * 排序
+ * @public
+ * @param {String | Object} field
+ * @param {String | void} type
+ */
 QP.sort = function (field, type) {
   let sorts = Object.create(null)
   if (arguments.length === 1) {
@@ -100,28 +105,47 @@ QP.sort = function (field, type) {
 }
 
 
-
-QP.count = function () { }
+QP.count = function () {
+  _query.call(this)
+  return this.target.length
+}
 
 
 QP.find = function () {
-  let { target } = this
-  let result = []
+  _query.call(this)
+  let result = this.target
 
-  // 匹配where
-  target.forEach(item => {
-    let res = _parseWhere.call(this, item)
-    if (res) {
-      result.push(item)
-    }
-  })
-
-  // sort
-  _parseSort.call(this, result)
-
-  console.log(result)
+  return result
 }
 
+
+
+
+/**
+ * 重置数据和参数
+ * @public
+ */
+QP.reset = function () {
+  this.target = clone(this.source)
+
+  // params
+  this.params = Object.create(null)
+  this.params.query = []
+  // sort 涉及到规则的先后顺序，因此使用数组存储
+  this.params.sort = []
+  // {field, value, expression, relation}
+  // unlock
+  this.queried = false
+}
+
+
+/**
+ * @public
+ */
+QP.destroy = function () {
+  this.target = null
+  this.params = null
+}
 
 
 /**
@@ -161,7 +185,7 @@ function _parseWhere (data) {
  * 解析各个where条件
  * @param {Any} value
  * @param {String} expression
- * @param {Any} condition
+ * @param {Primitive} condition
  * @returns {Boolean}
  */
 function matchWhere (value, expression, condition) {
@@ -224,6 +248,7 @@ function _addSort (field, type) {
   this.params.sort.push(sort)
 }
 
+
 /**
  * 对数据根据排序规则进行排序
  * 如果第一条规则未区分出大小，则使用第二条规则
@@ -252,6 +277,69 @@ function _parseSort (data) {
 }
 
 
+function _query () {
+  let { target } = this
+  let { skip, limit } = this.params
+
+  // 一条SQL语句查询完后将结果集保存在target中，避免重复查询
+  if (this.queried) {
+    return
+  }
+
+  let result = []
+  // 匹配where
+  let i = -1
+  let len = target.length
+  let item
+  let sorts = this.params.sort.length
+  while (++i < len) {
+    item = target[i]
+    let res = _parseWhere.call(this, item)
+    if (res) {
+      result.push(item)
+    }
+  }
+
+  // sort
+  if (sorts) {
+    _parseSort.call(this, result)
+  }
+
+  // 表示完成一次查询
+  this.queried = true
+
+
+  // 分页
+  let size = result.length
+
+  if (size === 0) {
+    this.target = []
+    return
+  }
+
+  let start = skip
+  let end
+  if (start === void 0) {
+    start = 0
+  }
+
+  // 这地方应该是size而不是size-1， 因为起始值一旦超过总数，就应该返回空
+  start = Math.min(start, size)
+
+  if (limit === void 0) {
+    end = size
+  } else {
+    end = start + limit
+  }
+
+  end = Math.min(end, size)
+
+  result = result.slice(start, end)
+
+  // 将当前target指向查询结果，
+  // 下次查询如果不经过reset方法，将会在该结果集中继续查询
+  this.target = result
+}
 
 /**
  * 根据path路径从object中取值
@@ -290,7 +378,7 @@ function getValue (name, object) {
 
 
 //   // where
-//   where() { }
+
 
 //   like() { }
 
@@ -298,21 +386,10 @@ function getValue (name, object) {
 
 //   between() { }
 
-//   skip() { }
-
-//   limit() { }
-
-//   desc() { }
-
-//   asc() { }
-
 //   groupby()
-
-//   find() { }
 
 //   findOne() { }
 
-//   destroy() { }
 
 
 export default Query

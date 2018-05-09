@@ -35,12 +35,14 @@ var testData = [
 
 const query = Query(testData)
 
-query
+let _query = query
   .where('range', -30, 'lte')
   .sort('id', 'asc')
   .sort('name', 'desc')
-  //.sort('range', 'asc')
-  .find()
+
+console.log(_query.count())
+console.log(_query.find())
+
 
 // query.like('name', '店铺')
 // query.like('probe_mac', '09')
