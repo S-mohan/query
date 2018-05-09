@@ -1,7 +1,7 @@
 
 import _ from './utils'
 
-const hasOwn = Object.prototype.hasOwnProperty
+// const hasOwn = Object.prototype.hasOwnProperty
 
 const clone = obj => JSON.parse(JSON.stringify(obj))
 
@@ -9,8 +9,9 @@ const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin',
 
 const RELATION = ['and', 'or']
 
+const SORTS = ['asc', 'desc']
 
-function Query(data, options) {
+function Query (data, options) {
   if (!(this instanceof Query)) {
     return new Query(data)
   }
@@ -29,7 +30,8 @@ function Query(data, options) {
 
   this.params.query = []
 
-  this.params.sort = Object.create(null)
+  // sort 涉及到规则的先后顺序，因此使用数组存储
+  this.params.sort = []
 
   // {field, value, expression, relation}
 }
@@ -59,9 +61,9 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
     throw new TypeError('Query: 参数condition必须是一个基本类型值')
   }
   expression = expression.toLocaleLowerCase()
-  expression = !!~EXPRESSIONS.indexOf(expression) ? expression : 'eq'
+  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'eq'
   relation = relation.toLocaleLowerCase()
-  relation = !!~RELATION.indexOf(relation) ? relation : 'and'
+  relation = ~RELATION.indexOf(relation) ? relation : 'and'
   const query = {
     _f: field,
     _c: condition,
@@ -75,13 +77,25 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
   return this
 }
 
-QP.asc = function (fields) {
-  _sort.call(this, fields, 'asc')
-  return this
-}
+QP.sort = function (field, type) {
+  let sorts = Object.create(null)
+  if (arguments.length === 1) {
+    if (_.isPlainObject(field)) {
+      sorts = field
+    } else {
+      sorts[field] = 'desc'
+    }
+  } else {
+    sorts[field] = type
+  }
 
-QP.desc = function (fields) {
-  _sort.call(this, fields, 'desc')
+  for (let k in sorts) {
+    let sortType = sorts[k].toLocaleLowerCase()
+    if (_.isString(k) && !!~SORTS.indexOf(sortType)) {
+      _addSort.call(this, k, sortType)
+    }
+  }
+
   return this
 }
 
@@ -91,31 +105,42 @@ QP.count = function () { }
 
 
 QP.find = function () {
-  let { params, target, size } = this
-  let { query } = params
+  let { target } = this
   let result = []
-  // sort
 
   // 匹配where
   target.forEach(item => {
-    let res = where(item, query)
+    let res = _parseWhere.call(this, item)
     if (res) {
       result.push(item)
     }
   })
 
-  
-  console.log(result)
+  // sort
+  _parseSort.call(this, result)
 
+  console.log(result)
 }
 
-function where(data, queries) {
+
+
+/**
+ * 解析where语句
+ * 返回传入数据是否匹配where规则的结果
+ * @private
+ * @param {Object} data
+ * @returns {Boolean}
+ */
+function _parseWhere (data) {
+  let { query: queries } = this.params
   let len = queries.length
   if (len === 0) {
     return true
   }
-  let result = true, query
-  for (let i = 0, len = queries.length; i < len; i++) {
+  let result = true
+  let query
+  let i = 0
+  for (; i < len; i++) {
     query = queries[i]
     let { _f: field, _c: cond, _e: exp, _r: rel } = query
     let value = getValue(field, data)
@@ -132,8 +157,14 @@ function where(data, queries) {
 }
 
 
-
-function matchWhere(value, expression, condition) {
+/**
+ * 解析各个where条件
+ * @param {Any} value
+ * @param {String} expression
+ * @param {Any} condition
+ * @returns {Boolean}
+ */
+function matchWhere (value, expression, condition) {
   let res = true
   switch (expression) {
     case 'like':
@@ -161,22 +192,63 @@ function matchWhere(value, expression, condition) {
     default:
       res = (value === condition)
   }
-  return res 
+  return res
 }
 
 
 /**
- * 私有方法，统一处理 asc/desc
- * @param {String| Array} fields 
- * @param {String} type 
+ * 添加排序规则
+ * @private
+ * @param {String} field
+ * @param {String} type
  */
-function _sort (fields, type) {
-  if (_.isString(fields)) {
-    fields = [fields]
+function _addSort (field, type) {
+  const { sort: sorts } = this.params
+  let len = sorts.length
+  let idx
+  while (--len >= 0) {
+    let sort = sorts[len]
+    // 已经存在当前字段的排序
+    if (sort[0] === field) {
+      idx = len
+      break
+    }
   }
-  if (_.isArray(fields) ) {
-    fields.forEach(field => this.params.sort[field] = type)
+
+  let sort = [field, type]
+
+  // 有则覆盖，无则添加
+  if (idx > -1) {
+    this.params.sort.splice(idx, 1)
   }
+  this.params.sort.push(sort)
+}
+
+/**
+ * 对数据根据排序规则进行排序
+ * 如果第一条规则未区分出大小，则使用第二条规则
+ * 否则一旦区分出大小，后面的规则将不再继续
+ * @param {Array} data
+ */
+function _parseSort (data) {
+  const { sort: sorts } = this.params
+  data.sort((a, b) => {
+    let i = -1
+    let len = sorts.length
+    let sort
+    while (++i < len) {
+      sort = sorts[i]
+      let field = sort[0]
+      let type = sort[1]
+      let valueA = getValue(field, a)
+      let valueB = getValue(field, b)
+      if (valueA > valueB) {
+        return type === 'desc' ? -1 : 1
+      } else if (valueA < valueB) {
+        return type === 'asc' ? -1 : 1
+      }
+    }
+  })
 }
 
 
@@ -200,7 +272,7 @@ function _sort (fields, type) {
  * @param object
  * @returns {Any}
  */
-function getValue(name, object) {
+function getValue (name, object) {
   if (_.isEmpty(name)) { return void 0 }
 
   let paths = name.split('.')

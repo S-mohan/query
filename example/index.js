@@ -3,7 +3,7 @@ var testData = [
   {
     "id": 94,
     "user_id": 4,
-    "name": "ABC",
+    "name": "BCD",
     "probe_mac": "C8:EE:A6:31:A7:99",
     "range": -30,
     "status": 1,
@@ -36,7 +36,10 @@ var testData = [
 const query = Query(testData)
 
 query
-  .where('range', -30, 'lt')
+  .where('range', -30, 'lte')
+  .sort('id', 'asc')
+  .sort('name', 'desc')
+  //.sort('range', 'asc')
   .find()
 
 // query.like('name', '店铺')
