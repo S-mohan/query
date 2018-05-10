@@ -171,6 +171,54 @@ const isFalse = value => {
 const isBoolean = value => isTrue(value) || isFalse(value)
 
 
+// 模糊搜索中需要转义的特殊字符
+const SPAN_CHAR_REG = /(\^|\.|\[|\$|\(|\)|\||\*|\+|\?|\{|\\)/g
+
+/**
+ * 将传入的搜索关键词转义
+ * @param {String} keyword
+ * @returns {String}
+ */
+const escapeKeyword = keyword => (keyword || '').toString().replace(SPAN_CHAR_REG, '\\$1')
+
+
+/**
+ * 根据path路径从object中取值
+ * eg.
+ * let obj = {
+ *  a : {
+ *    b : {
+ *      c : 1
+ *    }
+ *  },
+ *  d : [{c : 2}]
+ * }
+ * getObjectValue('a.b.c', obj) => 1
+ * getObjectValue('a.d.0.c', obj) => 2
+ * getObjectValue('a.d.0', obj) => {c: 2}
+ *
+ * @param name
+ * @param object
+ * @returns {Any}
+ */
+function getObjectValue (name, object) {
+  if (isEmpty(name)) { return void 0 }
+
+  let paths = name.split('.')
+
+  while (paths.length) {
+    let k = paths.shift()
+    object = object[k]
+    if (!isPlainObject(object) && !isArray(object)) {
+      break
+    }
+  }
+
+  return object
+}
+
+
+
 export default {
   regex,
   isRegexp,
@@ -189,5 +237,7 @@ export default {
   isSafeInteger,
   isTrue,
   isFalse,
-  isBoolean
+  isBoolean,
+  escapeKeyword,
+  getObjectValue
 }

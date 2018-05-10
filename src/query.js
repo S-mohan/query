@@ -16,7 +16,7 @@ function Query (data, options) {
     return new Query(data)
   }
 
-  if (!Array.isArray(data)) {
+  if (!_.isArray(data)) {
     // todo
   }
 
@@ -165,7 +165,7 @@ function _parseWhere (data) {
   for (; i < len; i++) {
     query = queries[i]
     let { _f: field, _c: cond, _e: exp, _r: rel } = query
-    let value = getValue(field, data)
+    let value = _.getObjectValue(field, data)
     // todo exists
     let res = matchWhere(value, exp, cond)
     // 上一个的结果跟其的并集或者交集
@@ -190,6 +190,8 @@ function matchWhere (value, expression, condition) {
   let res = true
   switch (expression) {
     case 'like':
+      let keyword = new RegExp(_.escapeKeyword(condition), 'i')
+      res = !!((value || '').toString().match(keyword))
       break
     case 'in':
       break
@@ -251,6 +253,7 @@ function _addSort (field, type) {
  * 对数据根据排序规则进行排序
  * 如果第一条规则未区分出大小，则使用第二条规则
  * 否则一旦区分出大小，后面的规则将不再继续
+ * @private
  * @param {Array} data
  */
 function _parseSort (data) {
@@ -263,8 +266,8 @@ function _parseSort (data) {
       sort = sorts[i]
       let field = sort[0]
       let type = sort[1]
-      let valueA = getValue(field, a)
-      let valueB = getValue(field, b)
+      let valueA = _.getObjectValue(field, a)
+      let valueB = _.getObjectValue(field, b)
       if (valueA > valueB) {
         return type === 'desc' ? -1 : 1
       } else if (valueA < valueB) {
@@ -343,40 +346,7 @@ function _query () {
   this.target = result
 }
 
-/**
- * 根据path路径从object中取值
- * eg.
- * let obj = {
- *  a : {
- *    b : {
- *      c : 1
- *    }
- *  },
- *  d : [{c : 2}]
- * }
- * getValue('a.b.c', obj) => 1
- * getValue('a.d.0.c', obj) => 2
- * getValue('a.d.0', obj) => {c: 2}
- *
- * @param name
- * @param object
- * @returns {Any}
- */
-function getValue (name, object) {
-  if (_.isEmpty(name)) { return void 0 }
 
-  let paths = name.split('.')
-
-  while (paths.length) {
-    let k = paths.shift()
-    object = object[k]
-    if (!_.isPlainObject(object) && !_.isArray(object)) {
-      break
-    }
-  }
-
-  return object
-}
 
 
 //   // where
