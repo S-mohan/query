@@ -36,9 +36,9 @@ var testData = [
 const query = Query(testData)
 
 let _query = query
-  .where('range', -30, 'lte')
-  .where('name', '店铺', 'like')
-  .where('probe_mac', '店铺', 'like', 'or')
+  // .where('range', 'lte', -30)
+  // .where('name', 'like', '店铺')
+  .where('id', 'exists')
   .sort('id', 'asc')
   .sort('name', 'desc')
 

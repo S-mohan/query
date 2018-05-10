@@ -1,7 +1,7 @@
 
 import _ from './utils'
 
-// const hasOwn = Object.prototype.hasOwnProperty
+//
 
 const clone = obj => JSON.parse(JSON.stringify(obj))
 
@@ -46,16 +46,26 @@ QP.limit = function (limit) {
 /**
  * where
  * @public
+ * 字段
  * @param {String} field
- * @param {Primitive} condition
+ * 表达式
  * @param {String} expression
- * @param {String} relation and | or
+ * 条件
+ * @param {Primitive} condition
+ * and | or 与上一个结果是并集还是交集
+ * @param {String} relation
+ * eg.
+ * query
+ * .where('name', 'eq', 'smohan')
+ * .where('age', 'lte', 20)
+ * .where('job', 'like', '前端工程师', 'or')
+ * .where('tags', 'exists')
  */
-QP.where = function (field, condition, expression = 'eq', relation = 'and') {
+QP.where = function (field, expression = 'eq', condition = '', relation = 'and') {
   if (!_.isString(field) || _.isEmpty(field)) {
     return this
   }
-  if (condition !== null && condition !== void 0 && !_.isPrimitive(condition)) {
+  if (!_.isNull(condition) && !_.isUndefined(condition) && !_.isPrimitive(condition)) {
     throw new TypeError('Query: 参数condition必须是一个基本类型值')
   }
   expression = expression.toLocaleLowerCase()
@@ -122,7 +132,7 @@ QP.sort = function (field, type) {
  * let query = new Query(data)
  *
  * query
- * .where('name', 'smohan', 'eq')
+ * .where('name', 'eq', 'smohan')
  * .count()
  */
 QP.count = function () {
@@ -138,7 +148,7 @@ QP.count = function () {
  * eg.
  * let query = new Query(data)
  *
- * query.where('name', 'smohan', 'eq')
+ * query.where('name', 'eq', 'smohan')
  * .skip(5)
  * .limit(10)
  * .find()
@@ -158,14 +168,14 @@ QP.find = function () {
  * @public
  * let query = new Query(data)
  *
- * let target = query.where('name', 'smohan', 'eq')
+ * let target = query.where('name', 'eq', 'smohan')
  * .skip(5)
  * .limit(10)
  * .find()
  *
  * query
  * .reset()
- * .where('name', 'smohan', 'like')
+ * .where('name','like', 'smohan')
  * ...
  */
 QP.reset = function () {
@@ -211,9 +221,13 @@ function _parseWhere (data) {
   for (; i < len; i++) {
     query = queries[i]
     let { _f: field, _c: cond, _e: exp, _r: rel } = query
-    let value = _.getObjectValue(field, data)
-    // todo exists
-    let res = matchWhere(value, exp, cond)
+    let res
+    if (exp === 'exists') {
+      res = _.objKeyIsExists(field, data)
+    } else {
+      let value = _.getObjectValue(field, data)
+      res = matchWhere(value, exp, cond)
+    }
     // 上一个的结果跟其的并集或者交集
     result = (rel === 'or') ? (result || res) : (result && res)
     // if (result === false) {

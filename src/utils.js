@@ -1,17 +1,10 @@
 // 缓存 Object.prototype.toString
 const TOSTRING = Object.prototype.toString
-
-// true values
-const TRUE_VALUES = [true, 1, '1', 'true']
-
-// false values
-const FALSE_VALIES = [false, 0, '0', 'false']
+// hasOwnProperty
+const HAS_OWN = Object.prototype.hasOwnProperty
 
 // primitive values
 const PRIMITIVE_VALUES = ['string', 'number', 'boolean', 'symbol']
-
-// max_safe_integer
-const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || Math.pow(2, 53) - 1
 
 
 /**
@@ -132,43 +125,13 @@ const isInteger = value => isNumber(value) && (value % 1 === 0)
 const isFloat = value => +value && (value !== (value | 0))
 
 
-/**
- * save interger
- * -Math.pow(2, 53) - 1 <= value <= Math.pow(2, 53) - 1
- * @param {Any} value
- * @returns {Boolean}
- */
-const isSafeInteger = value => isInteger(value) && value >= -MAX_SAFE_INTEGER && value <= MAX_SAFE_INTEGER
-
-
-/**
- * true
- * @param {Any} value
- * @returns {Boolean}
- */
-const isTrue = value => {
-  if (isString(value)) { value = value.toLowerCase() }
-  return !!~TRUE_VALUES.indexOf(value)
-}
-
-
-/**
- * false
- * @param {Any} value
- * @returns {Boolean}
- */
-const isFalse = value => {
-  if (isString(value)) { value = value.toLowerCase() }
-  return !!~FALSE_VALIES.indexOf(value)
-}
-
 
 /**
  * boolean
  * @param {Any} value
  * @returns {Boolean}
  */
-const isBoolean = value => isTrue(value) || isFalse(value)
+const isBoolean = value => typeof value === 'boolean'
 
 
 // 模糊搜索中需要转义的特殊字符
@@ -218,6 +181,29 @@ function getObjectValue (name, object) {
 }
 
 
+/**
+ * 验证对象中是否存在某个key
+ * @param {String} name
+ * @param {Object} object
+ * @returns {Boolean}
+ */
+function objKeyIsExists (name, object) {
+  if (isEmpty(name)) { return false }
+
+  let paths = name.split('.')
+
+  while (paths.length) {
+    let k = paths.shift()
+    if (!HAS_OWN.call(object, k)) {
+      return false
+    }
+    object = object[k]
+  }
+
+  return true
+}
+
+
 
 export default {
   regex,
@@ -234,10 +220,8 @@ export default {
   isNumber,
   isInteger,
   isFloat,
-  isSafeInteger,
-  isTrue,
-  isFalse,
   isBoolean,
   escapeKeyword,
-  getObjectValue
+  getObjectValue,
+  objKeyIsExists
 }
