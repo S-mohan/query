@@ -81,6 +81,16 @@ QP.where = function (field, condition, expression = 'eq', relation = 'and') {
  * @public
  * @param {String | Object} field
  * @param {String | void} type
+ * eg.
+ * single
+ * query.sort('create_time', 'asc')
+ *
+ * multiple
+ * query.sort({
+ *    create_time: 'desc',
+ *    id: 'desc',
+ *    name: 'asc'
+ * })
  */
 QP.sort = function (field, type) {
   let sorts = Object.create(null)
@@ -104,13 +114,35 @@ QP.sort = function (field, type) {
   return this
 }
 
-
+/**
+ * 获取一个匹配结果集的数量
+ * @public
+ * @returns {Number}
+ * eg.
+ * let query = new Query(data)
+ *
+ * query
+ * .where('name', 'smohan', 'eq')
+ * .count()
+ */
 QP.count = function () {
   _query.call(this)
   return this.target.length
 }
 
 
+/**
+ * 获取一个匹配结果集的集合
+ * @public
+ * @returns {Array}
+ * eg.
+ * let query = new Query(data)
+ *
+ * query.where('name', 'smohan', 'eq')
+ * .skip(5)
+ * .limit(10)
+ * .find()
+ */
 QP.find = function () {
   _query.call(this)
   let result = this.target
@@ -120,8 +152,21 @@ QP.find = function () {
 
 
 /**
- * 重置数据和参数
+ * 重置target和查询条件
+ * 就是数据恢复到初始化状态
+ * 可以从头开始操作源数据
  * @public
+ * let query = new Query(data)
+ *
+ * let target = query.where('name', 'smohan', 'eq')
+ * .skip(5)
+ * .limit(10)
+ * .find()
+ *
+ * query
+ * .reset()
+ * .where('name', 'smohan', 'like')
+ * ...
  */
 QP.reset = function () {
   this.target = clone(this.source)
@@ -138,6 +183,7 @@ QP.reset = function () {
 
 
 /**
+ * destroy
  * @public
  */
 QP.destroy = function () {
@@ -279,8 +325,9 @@ function _parseSort (data) {
 
 
 /**
- * @private
  * 处理并返回结果集
+ * where -> sort -> pagination
+ * @private
  */
 function _query () {
   let { target } = this
@@ -292,7 +339,7 @@ function _query () {
   }
 
   let result = []
-  // 匹配where
+  // match where
   let i = -1
   let len = target.length
   let item
@@ -310,11 +357,11 @@ function _query () {
     _parseSort.call(this, result)
   }
 
-  // 表示完成一次查询
+  // queried
   this.queried = true
 
 
-  // 分页
+  // 通过skip和limit计算起止截取位置
   let size = result.length
 
   if (size === 0) {
@@ -345,23 +392,6 @@ function _query () {
   // 下次查询如果不经过reset方法，将会在该结果集中继续查询
   this.target = result
 }
-
-
-
-
-//   // where
-
-
-//   like() { }
-
-//   in() { }
-
-//   between() { }
-
-//   groupby()
-
-//   findOne() { }
-
 
 
 export default Query
