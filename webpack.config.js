@@ -2,7 +2,7 @@ const pkj = require('./package.json')
 const webpack = require('webpack')
 const path = require('path')
 module.exports = {
-  entry: './src/query.js',
+  entry: './src/index.js',
   output: {
     filename: 'query.js',
     path: path.resolve(__dirname, './build'),

@@ -87,10 +87,19 @@ const isArray = value => Array.isArray.call(null, value)
 
 /**
  * primitive types
+ * without null && undefined
  * @param {Any} value
  * @returns {Boolean}
  */
 const isPrimitive = value => !!~PRIMITIVE_VALUES.indexOf((typeof value))
+
+
+/**
+ * primitive types
+ * @param {Any} value
+ * @returns {Boolean}
+ */
+const isFullPrimitive = value => isNull(value) || isUndefined(value) || isPrimitive(value)
 
 
 /**
@@ -125,7 +134,6 @@ const isInteger = value => isNumber(value) && (value % 1 === 0)
 const isFloat = value => +value && (value !== (value | 0))
 
 
-
 /**
  * boolean
  * @param {Any} value
@@ -136,6 +144,7 @@ const isBoolean = value => typeof value === 'boolean'
 
 // 模糊搜索中需要转义的特殊字符
 const SPAN_CHAR_REG = /(\^|\.|\[|\$|\(|\)|\||\*|\+|\?|\{|\\)/g
+
 
 /**
  * 将传入的搜索关键词转义
@@ -216,6 +225,7 @@ export default {
   isPlainObject,
   isArray,
   isPrimitive,
+  isFullPrimitive,
   isFunction,
   isNumber,
   isInteger,

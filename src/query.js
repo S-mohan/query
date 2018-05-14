@@ -1,21 +1,22 @@
 
 import _ from './utils'
 
-/**
- * 对象拷贝
- * @param {Object} obj
- * @returns {Object}
- */
-const clone = obj => JSON.parse(JSON.stringify(obj))
-
 // 查询表达式
-const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists']
+const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists', 'custom']
 
 // 查询关系
 const RELATION = ['and', 'or']
 
 // 排序
 const SORTS = ['asc', 'desc']
+
+
+/**
+ * 对象拷贝
+ * @param {Object} obj
+ * @returns {Object}
+ */
+const clone = obj => JSON.parse(JSON.stringify(obj))
 
 
 /**
@@ -91,8 +92,8 @@ QP.where = function (field, expression = 'exists', condition = '', relation = 'a
   if (!_.isString(field) || _.isEmpty(field)) {
     return this
   }
-  if (!_.isNull(condition) && !_.isUndefined(condition) && !_.isPrimitive(condition)) {
-    throw new TypeError('Query: 参数condition必须是一个基本类型值')
+  if (!_.isFullPrimitive(condition) && !_.isFunction(condition)) {
+    throw new TypeError('Query: condition 必须是个基本类型值或者函数')
   }
   expression = expression.toLocaleLowerCase()
   relation = relation.toLocaleLowerCase()
@@ -151,7 +152,6 @@ QP.sort = function (field, type) {
 
   return this
 }
-
 
 
 /**
@@ -223,7 +223,6 @@ QP.find = function () {
 
   // 将当前target指向查询结果，
   // 下次查询如果不经过reset方法，将会在该结果集中继续查询
-
   return result
 }
 
@@ -290,11 +289,19 @@ function _parseWhere (data) {
     query = queries[i]
     let { _f: field, _c: cond, _e: exp, _r: rel } = query
     let res
+    // field exists
     if (exp === 'exists') {
       res = _.objKeyIsExists(field, data)
     } else {
       let value = _.getObjectValue(field, data)
-      res = matchWhere(value, exp, cond)
+      // custom rule
+      // 条件必须是个回调函数
+      if (exp === 'custom' && _.isFunction(cond)) {
+        /* eslint-disable no-useless-call */
+        res = cond.call(null, value)
+      } else {
+        res = matchWhere(value, exp, cond)
+      }
     }
     // 上一个的结果跟其的并集或者交集
     result = (rel === 'or') ? (result || res) : (result && res)
@@ -322,8 +329,22 @@ function matchWhere (value, expression, condition) {
       res = !!((value || '').toString().match(keyword))
       break
     case 'in':
+      if (_.isPrimitive(condition)) {
+        condition = [condition]
+      }
+      if (_.isArray(condition)) {
+        res = !!~condition.indexOf(value)
+      } else {
+        res = false
+      }
       break
     case 'nin':
+      if (_.isPrimitive(condition)) {
+        condition = [condition]
+      }
+      if (_.isArray(condition)) {
+        res = (!!~condition.indexOf(value)) === false
+      }
       break
     case 'neq':
       res = (value !== condition)
@@ -414,7 +435,11 @@ function _parseSort (data) {
 function _query () {
   let { target } = this
 
-  // 一条SQL语句查询完后将结果集保存在target中，避免重复查询
+  // 一条SQL语句查询完后将结果集保存在target中，
+  // 如不经过reset方法，下次查询将会在当前基础上查询
+  // 主要是为了一条where语句既可以查询count，又可以
+  // 经过分页后查询list
+
   if (this.queried) {
     return
   }
