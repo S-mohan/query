@@ -84,7 +84,6 @@ Query.hooks = function (name, handler) {
 }
 
 
-
 // prototype
 const QP = Query.prototype
 
@@ -334,7 +333,9 @@ QP.find = function () {
 
 
 /**
+ * 分组
  * @public
+ * @param {String} field 
  */
 QP.group = function (field) {
   // todo

@@ -1,6 +1,6 @@
 {
   "name": "query",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SQL like data query",
   "main": "index.js",
   "scripts": {
