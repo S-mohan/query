@@ -1,16 +1,31 @@
 
 import _ from './utils'
 
-//
-
+/**
+ * 对象拷贝
+ * @param {Object} obj
+ * @returns {Object}
+ */
 const clone = obj => JSON.parse(JSON.stringify(obj))
 
+// 查询表达式
 const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists']
 
+// 查询关系
 const RELATION = ['and', 'or']
 
+// 排序
 const SORTS = ['asc', 'desc']
 
+
+/**
+ * @constructor
+ * 源数据
+ * @param {Array} data
+ * 可选配置
+ * @param {Object} options
+ * @returns {Object}
+ */
 function Query (data, options) {
   if (!(this instanceof Query)) {
     return new Query(data)
@@ -25,18 +40,29 @@ function Query (data, options) {
   this.reset()
 }
 
+// version
 Query.version = '__VERSION__'
 
 // prototype
 const QP = Query.prototype
 
 
+/**
+ * 取值起始位置
+ * @public
+ * @param {Number} skip
+ */
 QP.skip = function (skip) {
   this.params.skip = (_.isInteger(skip) && skip > 0) ? skip : 0
   return this
 }
 
 
+/**
+ * 每次取值个数
+ * @public
+ * @param {Number} limit
+ */
 QP.limit = function (limit) {
   this.params.limit = _.isInteger(limit) ? Math.abs(limit) : void 0
   return this
@@ -51,7 +77,7 @@ QP.limit = function (limit) {
  * 表达式
  * @param {String} expression
  * 条件
- * @param {Primitive} condition
+ * @param {Primitive} condition = [and|or]
  * and | or 与上一个结果是并集还是交集
  * @param {String} relation
  * eg.
@@ -61,7 +87,7 @@ QP.limit = function (limit) {
  * .where('job', 'like', '前端工程师', 'or')
  * .where('tags', 'exists')
  */
-QP.where = function (field, expression = 'eq', condition = '', relation = 'and') {
+QP.where = function (field, expression = 'exists', condition = '', relation = 'and') {
   if (!_.isString(field) || _.isEmpty(field)) {
     return this
   }
@@ -70,7 +96,7 @@ QP.where = function (field, expression = 'eq', condition = '', relation = 'and')
   }
   expression = expression.toLocaleLowerCase()
   relation = relation.toLocaleLowerCase()
-  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'eq'
+  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'exists'
   relation = ~RELATION.indexOf(relation) ? relation : 'and'
   const query = {
     _f: field,
@@ -93,9 +119,11 @@ QP.where = function (field, expression = 'eq', condition = '', relation = 'and')
  * @param {String | void} type
  * eg.
  * single
+ * 可以保证优先级
  * query.sort('create_time', 'asc')
  *
  * multiple
+ * 优先级无法保证
  * query.sort({
  *    create_time: 'desc',
  *    id: 'desc',
@@ -123,6 +151,8 @@ QP.sort = function (field, type) {
 
   return this
 }
+
+
 
 /**
  * 获取一个匹配结果集的数量
@@ -189,6 +219,7 @@ QP.reset = function () {
   // {field, value, expression, relation}
   // unlock
   this.queried = false
+  return this
 }
 
 
