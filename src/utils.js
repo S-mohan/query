@@ -4,6 +4,9 @@ const TOSTRING = Object.prototype.toString
 // hasOwnProperty
 const HAS_OWN = Object.prototype.hasOwnProperty
 
+// array.slice
+const ARRAY_SLICE = Array.prototype.slice
+
 // primitive values
 const PRIMITIVE_VALUES = ['string', 'number', 'boolean', 'symbol']
 
@@ -192,6 +195,15 @@ function getObjectValue (name, object) {
 
 
 /**
+ * 检测对象中是否存在key值
+ * @param {String} key
+ * @param {Object} object
+ * @returns {Boolean}
+ */
+const hasKey = (key, object) => HAS_OWN.call(object, key)
+
+
+/**
  * 验证对象中是否存在某个key
  * @param {String} name
  * @param {Object} object
@@ -204,7 +216,7 @@ function objKeyIsExists (name, object) {
 
   while (paths.length) {
     let k = paths.shift()
-    if (!HAS_OWN.call(object, k)) {
+    if (!hasKey(k, object)) {
       return false
     }
     object = object[k]
@@ -213,6 +225,34 @@ function objKeyIsExists (name, object) {
   return true
 }
 
+
+/**
+ * 将类数组转换为数组
+ * @param {ArrayLike} array
+ * @returns {Array}
+ */
+const toArray = array => ARRAY_SLICE.call(array)
+
+
+/**
+ * 优化后的apply
+ * @param {Function} func
+ * @param {Object} context
+ */
+function apply (func, context) {
+  const args = ARRAY_SLICE.call(arguments, 2)
+  switch (args.length) {
+    case 0:
+    case 1:
+      return func.call(context, args[0])
+    case 2:
+      return func.call(context, args[0], args[1])
+    case 3:
+      return func.call(context, args[0], args[1], args[2])
+    default:
+      return func.apply(context, args)
+  }
+}
 
 
 export default {
@@ -234,5 +274,8 @@ export default {
   isBoolean,
   escapeKeyword,
   getObjectValue,
-  objKeyIsExists
+  objKeyIsExists,
+  hasKey,
+  apply,
+  toArray
 }

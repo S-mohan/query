@@ -1,4 +1,5 @@
 import _ from './utils'
+import hooks from './hooks'
 
 // 查询表达式
 const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists', 'custom']
@@ -8,6 +9,19 @@ const RELATION = ['and', 'or']
 
 // 排序
 const SORTS = ['asc', 'desc']
+
+// 内置格式化钩子函数
+const BUILT_IN_HOOKS = Object.keys(hooks)
+
+// 格式化钩子函数字典(私有)
+const FORMATS_HOOKS = Object.create(null)
+
+// 内置钩子函数初始化
+BUILT_IN_HOOKS.forEach(hook => {
+  FORMATS_HOOKS[hook] = function (value) {
+    return _.apply(hooks[hook], value, ...(_.toArray(arguments)))
+  }
+})
 
 
 /**
@@ -23,7 +37,10 @@ const QUERY_DEFAULTS = {
 
   // 用于多个group后 key值得分割符
   // eg. smohan$smohan@163.com: []
-  groupKeySeparator: '$'
+  groupKeySeparator: '$',
+
+  // 基于老字段生成的新字段前缀
+  newFieldNamePrefix: '$'
 
 }
 
@@ -39,25 +56,91 @@ function Query (data, options) {
   if (!(this instanceof Query)) {
     return new Query(data, options)
   }
-
   if (!_.isArray(data)) {
     // todo
   }
-
   // source data
   this.source = data
-
   // options
   this.options = Object.assign(Object.create(null), QUERY_DEFAULTS, options)
-
   this.reset()
 }
 
 // version
 Query.version = '__VERSION__'
 
+
+/**
+ * register hooks
+ * @param {String} name
+ * @param {function} handler
+ */
+Query.hooks = function (name, handler) {
+  if (!!~BUILT_IN_HOOKS.indexOf(name) === false && _.isFunction(handler)) {
+    FORMATS_HOOKS[name] = function (value) {
+      return _.apply(handler, value, ...(_.toArray(arguments)))
+    }
+  }
+}
+
+
+
 // prototype
 const QP = Query.prototype
+
+
+// 格式化默认配置
+const FORMATS_DEFAULTS = {
+  // 传递给钩子函数的剩余参数
+  // 参数如果是个数组，将会展开每一项依次作为参数传递
+  // eg.
+  // args: [1, [1, 2], true] => func(value, 1, [1, 2], true)
+  // args: 'smohan' => func(value, 'smohan')
+  args: null,
+  // 是否生成新字段
+  // 该值如果是字符串，将会作为新字段的名称
+  // new: true => $name
+  // new: 'newName' => $newName
+  new: false
+}
+
+
+/**
+ * 字段格式化
+ * @public
+ * @param {String} field
+ * @param {String} type
+ * @param {Object} options
+ */
+QP.to = QP.format = function (field, type, options) {
+  options = Object.assign(Object.create(null), FORMATS_DEFAULTS, options)
+
+  if (_.hasKey(type, FORMATS_HOOKS)) {
+    // let newField = options.new
+    // if (newField) {
+    //   newField = this.options.newFieldNamePrefix
+    //   newField += (_.isString(newField) && newField.trim()) ? newField.trim() : field
+    // } else {
+    //   newField = false
+    // }
+    let args = []
+    if (!_.isUndefined(options.args)) {
+      if (_.isArray(options.args)) {
+        options.args.forEach(arg => args.push(arg))
+      } else {
+        args.push(options.args)
+      }
+    }
+
+    this.params.format[field] = {
+      args,
+      handler: FORMATS_HOOKS[type],
+      new: options.new
+    }
+  }
+
+  return this
+}
 
 
 /**
@@ -292,6 +375,8 @@ QP.reset = function () {
   this.params.field = Object.create(null)
   // group 字段
   this.params.group = []
+  // 格式化 字段
+  this.params.format = Object.create(null)
   // unlock
   this.queried = false
   this.indexes = Object.create(null)
@@ -513,7 +598,7 @@ function _query () {
   let len = target.length
   let item
   while (++i < len) {
-    item = target[i]
+    item = _format.call(this, target[i])
     let res = _parseWhere.call(this, item)
     if (res) {
       // group by
@@ -554,5 +639,39 @@ function _query () {
   this.target = result
 }
 
+
+/**
+ * 对指定字段格式化
+ * @private
+ * @param {Object} data
+ * @returns {Object}
+ */
+function _format (data) {
+  let { params, options } = this
+  if (params.format) {
+    for (let field in params.format) {
+      let format = params.format[field]
+      let value = _.getObjectValue(field, data)
+      let newValue = format.handler(value, ...format.args)
+      let parts = field.split('.')
+      let parentKey = (parts.slice(0, parts.length - 1)).join('.')
+      let curKey = parts[parts.length - 1]
+      let parentObj = data
+      if (parentKey) {
+        let parent = _.getObjectValue(parentKey, data)
+        if (_.isPlainObject(parent) || _.isArray(parent)) {
+          parentObj = parent
+        }
+      }
+      if (format.new) {
+        let newKey = options.newFieldNamePrefix + (_.isString(format.new) ? format.new : curKey)
+        parentObj[newKey] = newValue
+      } else {
+        parentObj[curKey] = newValue
+      }
+    }
+  }
+  return data
+}
 
 export default Query

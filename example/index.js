@@ -8,8 +8,9 @@ query
     _id: 'asc',
     createTime: 'desc',
   })
-  .group('category.name')
-  .group('count.comments')
+  .to('updateTime', 'date', {args : 'yy-MM-dd', new: 'day'})
+  .group('$day')
+  // .group('count.comments')
 
 console.log(query.find())  
 
