@@ -186,6 +186,43 @@ QP.count = function () {
 QP.find = function () {
   _query.call(this)
   let result = this.target
+  // sort
+  let sorts = this.params.sort.length
+  let { skip, limit } = this.params
+
+  if (sorts) {
+    _parseSort.call(this, result)
+  }
+
+  // 通过skip和limit计算起止截取位置
+  let size = result.length
+
+  if (size === 0) {
+    this.target = []
+    return
+  }
+
+  let start = skip
+  let end
+  if (start === void 0) {
+    start = 0
+  }
+
+  // 这地方应该是size而不是size-1， 因为起始值一旦超过总数，就应该返回空
+  start = Math.min(start, size)
+
+  if (limit === void 0) {
+    end = size
+  } else {
+    end = start + limit
+  }
+
+  end = Math.min(end, size)
+
+  result = result.slice(start, end)
+
+  // 将当前target指向查询结果，
+  // 下次查询如果不经过reset方法，将会在该结果集中继续查询
 
   return result
 }
@@ -376,7 +413,6 @@ function _parseSort (data) {
  */
 function _query () {
   let { target } = this
-  let { skip, limit } = this.params
 
   // 一条SQL语句查询完后将结果集保存在target中，避免重复查询
   if (this.queried) {
@@ -388,7 +424,6 @@ function _query () {
   let i = -1
   let len = target.length
   let item
-  let sorts = this.params.sort.length
   while (++i < len) {
     item = target[i]
     let res = _parseWhere.call(this, item)
@@ -396,45 +431,8 @@ function _query () {
       result.push(item)
     }
   }
-
-  // sort
-  if (sorts) {
-    _parseSort.call(this, result)
-  }
-
   // queried
   this.queried = true
-
-
-  // 通过skip和limit计算起止截取位置
-  let size = result.length
-
-  if (size === 0) {
-    this.target = []
-    return
-  }
-
-  let start = skip
-  let end
-  if (start === void 0) {
-    start = 0
-  }
-
-  // 这地方应该是size而不是size-1， 因为起始值一旦超过总数，就应该返回空
-  start = Math.min(start, size)
-
-  if (limit === void 0) {
-    end = size
-  } else {
-    end = start + limit
-  }
-
-  end = Math.min(end, size)
-
-  result = result.slice(start, end)
-
-  // 将当前target指向查询结果，
-  // 下次查询如果不经过reset方法，将会在该结果集中继续查询
   this.target = result
 }
 
