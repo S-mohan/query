@@ -1,4 +1,3 @@
-
 import _ from './utils'
 
 // 查询表达式
@@ -18,6 +17,15 @@ const SORTS = ['asc', 'desc']
  */
 const clone = obj => JSON.parse(JSON.stringify(obj))
 
+const QUERY_DEFAULTS = {
+  // 索引
+  index: [],
+
+  // 用于多个group后 key值得分割符
+  // eg. smohan$smohan@163.com: []
+  groupKeySeparator: '$'
+
+}
 
 /**
  * @constructor
@@ -29,14 +37,18 @@ const clone = obj => JSON.parse(JSON.stringify(obj))
  */
 function Query (data, options) {
   if (!(this instanceof Query)) {
-    return new Query(data)
+    return new Query(data, options)
   }
 
   if (!_.isArray(data)) {
     // todo
   }
 
+  // source data
   this.source = data
+
+  // options
+  this.options = Object.assign(Object.create(null), QUERY_DEFAULTS, options)
 
   this.reset()
 }
@@ -46,6 +58,17 @@ Query.version = '__VERSION__'
 
 // prototype
 const QP = Query.prototype
+
+
+/**
+ * @public
+ * @param {Number} start
+ * @param {Number} end
+ */
+QP.range = function (start, end) {
+  // todo
+  return this
+}
 
 
 /**
@@ -228,6 +251,18 @@ QP.find = function () {
 
 
 /**
+ * @public
+ */
+QP.group = function (field) {
+  // todo
+  if (!!~this.params.group.indexOf(field) === false) {
+    this.params.group.push(field)
+  }
+  return this
+}
+
+
+/**
  * 重置target和查询条件
  * 就是数据恢复到初始化状态
  * 可以从头开始操作源数据
@@ -245,16 +280,43 @@ QP.find = function () {
  * ...
  */
 QP.reset = function () {
-  this.target = clone(this.source)
-
+  const { source } = this
+  this.target = clone(source)
   // params
   this.params = Object.create(null)
+  // 查询条件
   this.params.query = []
-  // sort 涉及到规则的先后顺序，因此使用数组存储
+  // sort涉及到规则的先后顺序，因此使用数组存储
   this.params.sort = []
-  // {field, value, expression, relation}
+  // 需要输出的字段
+  this.params.field = Object.create(null)
+  // group 字段
+  this.params.group = []
   // unlock
   this.queried = false
+  this.indexes = Object.create(null)
+
+  // 创建索引
+  // todo 还没想好索引怎么处理
+  // if (options.index && options.index.length) {
+  //   let i = -1
+  //   let len = this.target.length
+
+  //   while (++i < len) {
+  //     let item = this.target[i]
+  //     // 仅对第一级字段做索引，深层次不做
+  //     for (let k in item) {
+  //       if (!!~options.index.indexOf(k) === false) {
+  //         continue
+  //       }
+  //       if (!this.indexes[k]) {
+  //         this.indexes[k] = Object.create(null)
+  //       }
+  //       this.indexes[k][item[k]] = i
+  //     }
+  //   }
+  // }
+
   return this
 }
 
@@ -305,9 +367,6 @@ function _parseWhere (data) {
     }
     // 上一个的结果跟其的并集或者交集
     result = (rel === 'or') ? (result || res) : (result && res)
-    // if (result === false) {
-    //   break
-    // }
   }
 
   return result
@@ -315,7 +374,7 @@ function _parseWhere (data) {
 
 
 /**
- * 解析各个where条件
+ * 解析where条件的各种情况
  * @param {Any} value
  * @param {String} expression
  * @param {Primitive} condition
@@ -433,18 +492,22 @@ function _parseSort (data) {
  * @private
  */
 function _query () {
-  let { target } = this
-
+  let { target, params, queried, options } = this
+  let { group } = params
   // 一条SQL语句查询完后将结果集保存在target中，
   // 如不经过reset方法，下次查询将会在当前基础上查询
   // 主要是为了一条where语句既可以查询count，又可以
   // 经过分页后查询list
 
-  if (this.queried) {
+  if (queried) {
     return
   }
 
   let result = []
+  let groups = Object.create(null)
+  // 是否需要分组
+  const groupLen = group && group.length
+
   // match where
   let i = -1
   let len = target.length
@@ -453,9 +516,39 @@ function _query () {
     item = target[i]
     let res = _parseWhere.call(this, item)
     if (res) {
-      result.push(item)
+      // group by
+      if (groupLen) {
+        let values = []
+        for (let j = 0; j < groupLen; j++) {
+          let field = group[j]
+          let value = _.getObjectValue(field, item)
+          if (value !== void 0) {
+            values.push(value)
+          }
+        }
+        let groupKey = values.join(options.groupKeySeparator)
+        if (!groups[groupKey]) {
+          groups[groupKey] = []
+        }
+        groups[groupKey].push(item)
+      } else {
+        result.push(item)
+      }
     }
   }
+
+  if (groupLen) {
+    result.length = 0
+    for (let key in groups) {
+      let list = groups[key]
+      result.push({
+        _id: key,
+        list,
+        count: list.length
+      })
+    }
+  }
+
   // queried
   this.queried = true
   this.target = result

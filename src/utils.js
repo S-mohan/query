@@ -1,5 +1,6 @@
 // 缓存 Object.prototype.toString
 const TOSTRING = Object.prototype.toString
+
 // hasOwnProperty
 const HAS_OWN = Object.prototype.hasOwnProperty
 
