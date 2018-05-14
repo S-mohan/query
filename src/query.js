@@ -335,7 +335,7 @@ QP.find = function () {
 /**
  * 分组
  * @public
- * @param {String} field 
+ * @param {String} field
  */
 QP.group = function (field) {
   // todo
