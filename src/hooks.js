@@ -3,7 +3,7 @@ import _ from './utils'
 /**
  * 将一个日期（字符串）转换为真实日期
  * @param  {Any} date
- * @return {Object}
+ * @return {Date}
  */
 const parseDate = date => {
   // Date Object
@@ -48,8 +48,8 @@ const getDateMap = date => {
 
 /**
  * 格式化日期
- * @param  {DateString} date   [日期]
- * @param  {String} format [格式化类型]
+ * @param  {Date} date   
+ * @param  {String} format
  * @return {String}
  */
 const formatDate = (date = new Date(), format = 'yy-MM-dd hh:mm:ss') => {
@@ -81,8 +81,7 @@ const toNumber = value => {
   if (_.isNumber(value)) {
     return value
   }
-  let _value = parseFloat(value, 10)
-  return isNaN(_value) ? value : _value
+  return +value
 }
 
 
@@ -128,8 +127,12 @@ const toBoolean = value => {
  * @param {any} value
  * @returns {String} 
  */
-const toString = value => String(value)
-
+const toString = value => {
+  if (_.isString(value)) {
+    return value
+  }
+  return value + ''
+}
 
 
 /**

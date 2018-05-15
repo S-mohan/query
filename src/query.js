@@ -4,9 +4,6 @@ import hooks from './hooks'
 // 查询表达式
 const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists', 'custom']
 
-// 查询关系
-const RELATION = ['and', 'or']
-
 // 排序
 const SORTS = ['asc', 'desc']
 
@@ -31,18 +28,18 @@ BUILT_IN_HOOKS.forEach(hook => {
  */
 const clone = obj => JSON.parse(JSON.stringify(obj))
 
+
+// 默认可配置项
 const QUERY_DEFAULTS = {
   // 索引
   index: [],
-
   // 用于多个group后 key值得分割符
   // eg. smohan$smohan@163.com: []
   groupKeySeparator: '$',
-
   // 基于老字段生成的新字段前缀
   newFieldNamePrefix: '$'
-
 }
+
 
 /**
  * @constructor
@@ -65,6 +62,7 @@ function Query (data, options) {
   this.options = Object.assign(Object.create(null), QUERY_DEFAULTS, options)
   this.reset()
 }
+
 
 // version
 Query.version = '__VERSION__'
@@ -113,15 +111,7 @@ const FORMATS_DEFAULTS = {
  */
 QP.to = QP.format = function (field, type, options) {
   options = Object.assign(Object.create(null), FORMATS_DEFAULTS, options)
-
   if (_.hasKey(type, FORMATS_HOOKS)) {
-    // let newField = options.new
-    // if (newField) {
-    //   newField = this.options.newFieldNamePrefix
-    //   newField += (_.isString(newField) && newField.trim()) ? newField.trim() : field
-    // } else {
-    //   newField = false
-    // }
     let args = []
     if (!_.isUndefined(options.args)) {
       if (_.isArray(options.args)) {
@@ -130,19 +120,18 @@ QP.to = QP.format = function (field, type, options) {
         args.push(options.args)
       }
     }
-
     this.params.format[field] = {
       args,
       handler: FORMATS_HOOKS[type],
       new: options.new
     }
   }
-
   return this
 }
 
 
 /**
+ * 在一个区间内取值
  * @public
  * @param {Number} start
  * @param {Number} end
@@ -183,37 +172,43 @@ QP.limit = function (limit) {
  * 表达式
  * @param {String} expression
  * 条件
- * @param {Primitive} condition = [and|or]
- * and | or 与上一个结果是并集还是交集
- * @param {String} relation
+ * @param {Primitive} condition
+ * 与上一个结果是交集关系(and)
  * eg.
  * query
  * .where('name', 'eq', 'smohan')
  * .where('age', 'lte', 20)
- * .where('job', 'like', '前端工程师', 'or')
+ * .where('job', 'like', '前端工程师')
  * .where('tags', 'exists')
+ * .where('time', function (value) { return true })
+ *
+ * name = smohan && age >= 20 && Obj.hasKey(tags) && 'job like 前端工程师' && 'time = func.call'
  */
-QP.where = function (field, expression = 'exists', condition = '', relation = 'and') {
-  if (!_.isString(field) || _.isEmpty(field)) {
-    return this
-  }
-  if (!_.isFullPrimitive(condition) && !_.isFunction(condition)) {
-    throw new TypeError('Query: condition 必须是个基本类型值或者函数')
-  }
-  expression = expression.toLocaleLowerCase()
-  relation = relation.toLocaleLowerCase()
-  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'exists'
-  relation = ~RELATION.indexOf(relation) ? relation : 'and'
-  const query = {
-    _f: field,
-    _c: condition,
-    _e: expression,
-    _r: relation
-  }
-  const queries = JSON.stringify(this.params.query)
-  if (!~queries.indexOf(JSON.stringify(query))) {
-    this.params.query.push(query)
-  }
+QP.where = function (field, expression, condition) {
+  _addWhere.call(this, field, expression, condition, 'and')
+  return this
+}
+
+
+/**
+ * whereOr
+ * @public
+ * 字段
+ * @param {String} field
+ * 表达式
+ * @param {String} expression
+ * 条件
+ * @param {Primitive} condition
+ * 与上一个结果是并集关系(or)
+ * eg.
+ * query
+ * .whereOr('job', 'like', '前端工程师')
+ * .whereOr('time', function (value) { return true })
+ *
+ * 'job like 前端工程师' || 'time = func.call'
+ */
+QP.whereOr = function (field, expression, condition) {
+  _addWhere.call(this, field, expression, condition, 'or')
   return this
 }
 
@@ -338,7 +333,6 @@ QP.find = function () {
  * @param {String} field
  */
 QP.group = function (field) {
-  // todo
   if (!!~this.params.group.indexOf(field) === false) {
     this.params.group.push(field)
   }
@@ -418,6 +412,46 @@ QP.destroy = function () {
 
 
 /**
+ * 统一处理where语句和whereOr语句
+ * @private
+ * @param {String} field
+ * @param {String} expression
+ * @param {Primitive} condition
+ * @param {String} relation [and | or]
+ */
+function _addWhere (field, expression, condition, relation) {
+  if (_.isString(field) || _.isEmpty(field)) {
+    return this
+  }
+
+  // 如果参数2是个函数，则自动忽略参数3
+  if (_.isFunction(expression)) {
+    condition = expression
+    expression = 'custom' // lte
+  }
+
+  // condition只能是基本类型或者函数
+  if (!_.isFullPrimitive(condition) && !_.isFunction(condition)) {
+    throw new TypeError('Query: condition 必须是个基本类型值或者函数')
+  }
+
+  expression = expression.toLocaleLowerCase()
+  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'exists'
+
+  const query = {
+    _f: field,
+    _c: condition,
+    _e: expression,
+    _r: relation || 'and'
+  }
+  const queries = JSON.stringify(this.params.query)
+  if (!~queries.indexOf(JSON.stringify(query))) {
+    this.params.query.push(query)
+  }
+}
+
+
+/**
  * 解析where语句
  * 返回传入数据是否匹配where规则的结果
  * @private
@@ -461,6 +495,7 @@ function _parseWhere (data) {
 
 /**
  * 解析where条件的各种情况
+ * @private
  * @param {Any} value
  * @param {String} expression
  * @param {Primitive} condition
@@ -674,5 +709,7 @@ function _format (data) {
   }
   return data
 }
+
+
 
 export default Query

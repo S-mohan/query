@@ -20,20 +20,6 @@ const isRegexp = value => TOSTRING.call(value) === '[object RegExp]'
 
 
 /**
- * 是否匹配正则表达式
- * @param {RegExp} reg
- * @param {Any} value
- * @returns {Boolean}
- */
-const regex = (reg, value) => {
-  if (!isRegexp(reg)) {
-    throw TypeError('[VALIDATE ERROR]: The parameter reg must be a RegExp object')
-  }
-  return !!reg.test(value)
-}
-
-
-/**
  * String
  * @param {Any} value
  * @returns {Boolean}
@@ -255,8 +241,8 @@ function apply (func, context) {
 }
 
 
+
 export default {
-  regex,
   isRegexp,
   isString,
   isUndefined,
