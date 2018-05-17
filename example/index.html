@@ -1,15 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>Query Example</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .row {
+      border: 1px solid #ccc;
+      margin: 10px;
+      font-size: 0;
+    }
+
+    .cell {
+      width: 33.333%;
+      height: 100%;
+      display: inline-block;
+      vertical-align: top;
+      border-left: 1px solid #ccc;
+      margin-left: -1px;
+      padding: 10px;
+      font-size: 14px;
+      height: 700px;
+    }
+
+    .cell ul {
+      margin: 0 auto;
+    }
+
+    .cell li {
+      height: 24px;
+      line-height: 24px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell button {
+      margin-top: 10px;
+      padding: 5px 15px;
+      cursor: pointer;
+    }
+
+    .cell h3 {
+      font-size: 18px;
+      line-height: 1;
+      margin: 0 0 10px 0;
+    }
+
+    .cell h5 {
+      color: royalblue;
+      font-size: 16px;
+      margin: 0 0 10px 0;
+    }
+
+    .cell label {
+      display: inline-block;
+      margin: 0 10px 10px 0;
+      color: #333;
+    }
+
+    .cell pre {
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
+
 <body>
+
+  <article class="row">
+    <section class="cell">
+      <h3>Result</h3>
+      <ul id="result"></ul>
+    </section>
+    <section class="cell">
+      <h3>Sql</h3>
+      <pre id="code"></pre>
+    </section>
+    <section class="cell">
+      <h3>Query</h3>
+      <form onsubmit="return false" method="post">
+        <h5>where/whereOr</h5>
+        <label>
+          <input type="checkbox" name="where" value=".where('count.comments', 'gt', 0)">comments > 0</label>
+        <br/>
+        <label>
+          <input type="checkbox" name="where" value=".where('copyright.author', 'nte', 'smohan')">author !== 'smohan'</label>
+        <br/>
+        <label>
+          <input type="checkbox" name="where" value=".where('title', 'like', 'javascript').whereOr('tags', 'like', 'javascript')">title or tags like `javascript`</label>
+        <br/>
+        <br/>
+        <h5>sort</h5>
+        <label>
+          <input type="radio" name="sort" value=".sort('_id', 'asc')" checked>default</label>
+        <label>
+          <input type="radio" name="sort" value=".sort('createTime', 'desc')">createTime desc ↓</label>
+        <label>
+          <input type="radio" name="sort" value=".sort('createTime', 'asc')">createTime asc ↑</label>
+        <label>
+          <input type="radio" name="sort" value=".sort('title', 'desc')">title desc ↓</label>
+        <label>
+          <input type="radio" name="sort" value=".sort('title', 'asc')">title asc ↑</label>
+        <br/>
+        <br/>
+        <h5>skip</h5>
+        <label>
+          <input type="number" min="0" step="1" name="skip" value="0">
+        </label>
+        <br/>
+        <br/>
+        <h5>limit</h5>
+        <label>
+          <input type="number" min="1" step="1" max="10" name="limit" value="26">
+        </label>
+        <br/>
+        <br/>
+        <h5>group</h5>
+        <label>
+          <input type="radio" name="group" value="" checked> null
+        </label>
+        <br/>
+        <label>
+          <input type="radio" name="group" value=".group('category.id')"> group by category.id
+        </label>
+        <br/>
+        <label>
+          <input type="radio" name="group" value=".to('createTime', 'date', {args: ['yy-MM'], new: 'mouth'}).group('$mouth')"> group by createTime(yy-MM)
+        </label>
+        <br/>
+        <label>
+          <input type="radio" name="group" value=".group('copyright.author')"> group by author
+        </label>
+        <br/>
+        <br/>
+        <button type="reset" id="reset">reset</button>
+        <button type="button" id="search">search</button>
+      </form>
+    </section>
+  </article>
 
   <script src="../build/query.js"></script>
   <script src="./data.js"></script>
   <script src="./index.js"></script>
 </body>
+
 </html>

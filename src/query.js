@@ -430,7 +430,7 @@ QP.destroy = function () {
  * @param {String} relation [and | or]
  */
 function _addWhere (field, expression, condition, relation) {
-  if (_.isString(field) || _.isEmpty(field)) {
+  if (!_.isString(field) || _.isEmpty(field)) {
     return this
   }
 
@@ -455,6 +455,7 @@ function _addWhere (field, expression, condition, relation) {
     _r: relation || 'and'
   }
   const queries = JSON.stringify(this.params.query)
+  console.log(queries, query)
   if (!~queries.indexOf(JSON.stringify(query))) {
     this.params.query.push(query)
   }

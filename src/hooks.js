@@ -52,7 +52,9 @@ const getDateMap = date => {
  * @param  {String} format
  * @return {String}
  */
-const formatDate = (date = new Date(), format = 'yy-MM-dd hh:mm:ss') => {
+const formatDate = (date, format) => {
+  date = date || new Date()
+  format = format || 'yy-MM-dd hh:mm:ss'
   const map = getDateMap(date)
   format = format.replace(/([yMdhmsqS])+/g, (all, t) => {
     let v = map[t]
