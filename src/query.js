@@ -138,6 +138,14 @@ QP.to = QP.format = function (field, type, options) {
  */
 QP.range = function (start, end) {
   // todo
+  if (_.isInteger(start) && start >= 0) {
+    this.params.range[0] = start
+  }
+
+  if (_.isInteger(end) && end >= 0) {
+    this.params.range[1] = end
+  }
+
   return this
 }
 
@@ -372,6 +380,8 @@ QP.reset = function () {
   this.params.group = []
   // 格式化 字段
   this.params.format = Object.create(null)
+  // range
+  this.params.range = []
   // unlock
   this.queried = false
   this.indexes = Object.create(null)
@@ -614,7 +624,7 @@ function _parseSort (data) {
  */
 function _query () {
   let { target, params, queried, options } = this
-  let { group } = params
+  let { group, range } = params
   // 一条SQL语句查询完后将结果集保存在target中，
   // 如不经过reset方法，下次查询将会在当前基础上查询
   // 主要是为了一条where语句既可以查询count，又可以
@@ -629,9 +639,28 @@ function _query () {
   // 是否需要分组
   const groupLen = group && group.length
 
-  // match where
+  // range
+  let rangeStart = range[0]
+  let rangeEnd = range[1]
   let i = -1
   let len = target.length
+
+  if (!_.isUndefined(rangeStart) || !_.isUndefined(rangeEnd)) {
+    if (rangeStart > rangeEnd) {
+      [rangeStart, rangeEnd] = [rangeEnd, rangeStart]
+    }
+    if (rangeStart > len - 1) {
+      rangeStart = len - 1
+    }
+    if (rangeEnd > len - 1) {
+      rangeEnd = len - 1
+    }
+    target = target.slice(rangeStart, rangeEnd)
+    len = target.length
+  }
+
+  // match where
+
   let item
   while (++i < len) {
     item = _format.call(this, target[i])

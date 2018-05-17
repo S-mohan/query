@@ -4,12 +4,13 @@ const query = Query(data)
 // // 分页
 query
   //.where('allowComment', 'eq', true)
-  .sort({
-    _id: 'asc',
-    createTime: 'desc',
-  })
+  .range(5)
+  // .sort({
+  //   _id: 'asc',
+  //   createTime: 'desc',
+  // })
   .to('updateTime', 'date', {args : 'yy-MM-dd', new: 'day'})
-  .group('$day')
+  //.group('$day')
   // .group('count.comments')
 
 console.log(query.find())  
