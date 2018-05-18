@@ -1,10 +1,19 @@
 # Query
 
-> javascript 实现类SQL数据查询
+> 类SQL前端数据查询类库
 
+
+### 如何使用
+```javascript
+// umd
+<script src="./build/query.js"></script>
+var data = [] // 数据
+var query = new Query(data)
+```
 
 ### 实例方法
 #### range
+
 
 #### to/format
 
