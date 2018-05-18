@@ -2,7 +2,7 @@ import _ from './utils'
 import hooks from './hooks'
 
 // 查询表达式
-const EXPRESSIONS = ['eq', '=', 'neq', '<>', 'gt', '>', 'gte', '>=', 'lt', '<', 'lte', '<=', 'like', 'in', 'nin', 'exists', 'custom']
+const EXPRESSIONS = ['eq', '=', 'neq', '<>', 'gt', '>', 'gte', '>=', 'lt', '<', 'lte', '<=', 'like', 'in', 'nin', 'exists']
 
 // 排序
 const SORTS = ['asc', 'desc']
@@ -455,26 +455,28 @@ QP.destroy = function () {
  * @private
  * @param {String} field
  * @param {String} expression
- * @param {String | Function} condition
+ * @param {String | Function | RegExp} condition
  * @param {String} relation
  * @returns {Object | undefined}
  */
 function _adapterWhere (field, expression, condition, relation) {
-  if (!_.isString(field) || _.isEmpty(field)) {
+  if (!_.isString(field) || _.isEmpty(field) || !!~EXPRESSIONS.indexOf(expression) === false) {
     return
   }
-  if (_.isFunction(expression)) {
-    condition = expression
-    expression = 'custom'
-    relation = ~RELATIONS.indexOf(condition) ? condition : ~RELATIONS.indexOf(relation) ? relation : 'and'
+
+  // 如果condition是个正则表达式，则将它包装成函数
+  if (condition && _.isRegexp(condition)) {
+    let reg = condition
+    condition = function (value) {
+      return !!reg.test(value)
+    }
   }
-  // condition只能是基本类型或者函数
-  if (!_.isFullPrimitive(condition) && !_.isFunction(condition)) {
-    log('condition must be a primitive value or function')
-    return
+
+  // 如果condition是个函数的话，自动将expression转换成等号表达式
+  if (_.isFunction(condition)) {
+    expression = 'eq'
   }
-  expression = expression.toLocaleLowerCase()
-  expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'exists'
+
   relation = ~RELATIONS.indexOf(relation) ? relation : 'and'
   const query = {
     _f: field,
@@ -544,9 +546,7 @@ function getWhereGroupResult (whereGroup, data) {
       res = _.objKeyIsExists(field, data)
     } else {
       let value = _.getObjectValue(field, data)
-      // custom rule
-      // 条件必须是个回调函数
-      if (exp === 'custom' && _.isFunction(cond)) {
+      if (_.isFunction(cond)) {
         /* eslint-disable no-useless-call */
         res = cond.call(null, value)
       } else {
