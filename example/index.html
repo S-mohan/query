@@ -26,19 +26,52 @@
       margin-left: -1px;
       padding: 10px;
       font-size: 14px;
-      height: 700px;
+      height: 800px;
+      overflow-y: auto;
     }
 
     .cell ul {
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
 
     .cell li {
-      height: 24px;
-      line-height: 24px;
+      line-height: 20px;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cell li .item-title {
+      display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-weight: normal;
+      margin: 0;
+      padding: 0;
+    }
+
+    .cell li .item-title a {
+      color: royalblue;
+    }
+
+    .cell li .item-title time {
+      font-size: 12px;
+      color: #999;
+      margin-left: 10px;
+    }
+
+    .cell li .item-info {
+      margin-top: 5px;
+    }
+
+    .cell li .item-info span:not(:first-of-type) {
+      margin-left: 20px;
+    }
+
+    .cell li .item-info span strong {
+      font-weight: bold;
     }
 
     .cell button {
@@ -77,7 +110,9 @@
   <article class="row">
     <section class="cell">
       <h3>Result</h3>
-      <ul id="result"></ul>
+      <ul id="result">
+        <!-- post items -->
+      </ul>
     </section>
     <section class="cell">
       <h3>Sql</h3>
@@ -86,20 +121,21 @@
     <section class="cell">
       <h3>Query</h3>
       <form onsubmit="return false" method="post">
-        <h5>where/whereOr</h5>
         <label>
+          <h5>where/whereOr</h5>
           <input type="checkbox" name="where" value=".where('count.comments', 'gt', 0)">comments > 0</label>
         <br/>
         <label>
-          <input type="checkbox" name="where" value=".where('copyright.author', 'nte', 'smohan')">author !== 'smohan'</label>
+          <input type="checkbox" name="where" value=".where('copyright.author', 'neq', 'smohan')">author !== 'smohan'
+        </label>
         <br/>
         <label>
-          <input type="checkbox" name="where" value=".where('title', 'like', 'javascript').whereOr('tags', 'like', 'javascript')">title or tags like `javascript`</label>
+          <input type="checkbox" name="where" value=".where([['title', 'like', 'javascript'], ['tags', 'like', 'javascript', 'or']])">title or tags like `javascript`</label>
         <br/>
         <br/>
         <h5>sort</h5>
         <label>
-          <input type="radio" name="sort" value=".sort('_id', 'asc')" checked>default</label>
+          <input type="radio" name="sort" value="" checked>null</label>
         <label>
           <input type="radio" name="sort" value=".sort('createTime', 'desc')">createTime desc ↓</label>
         <label>
@@ -128,7 +164,7 @@
         </label>
         <br/>
         <label>
-          <input type="radio" name="group" value=".group('category.id')"> group by category.id
+          <input type="radio" name="group" value=".group('category.name')"> group by category.name
         </label>
         <br/>
         <label>
@@ -145,6 +181,31 @@
       </form>
     </section>
   </article>
+
+  <!-- template 1 -->
+  <script type="text/template" id="tpl-post">
+    <li>
+        <h4 class="item-title">
+          <a>{title}</a>
+          <time>{createTime}</time>
+        </h4>
+        <div class="item-info">
+          <span>author：<strong>{author}</strong></span>
+          <span>comments: <strong>{comments}</strong></span>
+          <span>tags: <strong>{tags}</strong></span>
+        </div>
+      </li>
+  </script>
+  <!-- template 2 -->
+  <script type="text/template" id="tpl-group">
+    <li>
+        <h4 class="item-title">
+          <a>{id}</a>
+          <time>{count}</time>
+        </h4>
+      </li>
+  </script>
+
 
   <script src="../build/query.js"></script>
   <script src="./data.js"></script>

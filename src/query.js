@@ -2,10 +2,12 @@ import _ from './utils'
 import hooks from './hooks'
 
 // 查询表达式
-const EXPRESSIONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'nin', 'exists', 'custom']
+const EXPRESSIONS = ['eq', '=', 'neq', '<>', 'gt', '>', 'gte', '>=', 'lt', '<', 'lte', '<=', 'like', 'in', 'nin', 'exists', 'custom']
 
 // 排序
 const SORTS = ['asc', 'desc']
+
+const RELATIONS = ['and', 'or']
 
 // 内置格式化钩子函数
 const BUILT_IN_HOOKS = Object.keys(hooks)
@@ -54,7 +56,8 @@ function Query (data, options) {
     return new Query(data, options)
   }
   if (!_.isArray(data)) {
-    // todo
+    log('data must be an array')
+    data = []
   }
   // source data
   this.source = data
@@ -98,7 +101,10 @@ const FORMATS_DEFAULTS = {
   // 该值如果是字符串，将会作为新字段的名称
   // new: true => $name
   // new: 'newName' => $newName
-  new: false
+  new: false,
+
+  // 私有格式化钩子
+  handler: null
 }
 
 
@@ -111,7 +117,14 @@ const FORMATS_DEFAULTS = {
  */
 QP.to = QP.format = function (field, type, options) {
   options = Object.assign(Object.create(null), FORMATS_DEFAULTS, options)
-  if (_.hasKey(type, FORMATS_HOOKS)) {
+  let handler
+  // 如果自己提供了钩子函数
+  if (options.handler && _.isFunction(options.handler)) {
+    handler = options.handler
+  } else if (_.hasKey(type, FORMATS_HOOKS)) {
+    handler = FORMATS_HOOKS[type]
+  }
+  if (handler) {
     let args = []
     if (!_.isUndefined(options.args)) {
       if (_.isArray(options.args)) {
@@ -122,7 +135,7 @@ QP.to = QP.format = function (field, type, options) {
     }
     this.params.format[field] = {
       args,
-      handler: FORMATS_HOOKS[type],
+      handler,
       new: options.new
     }
   }
@@ -175,48 +188,63 @@ QP.limit = function (limit) {
 /**
  * where
  * @public
- * 字段
  * @param {String} field
- * 表达式
  * @param {String} expression
- * 条件
- * @param {Primitive} condition
- * 与上一个结果是交集关系(and)
- * eg.
- * query
- * .where('name', 'eq', 'smohan')
- * .where('age', 'lte', 20)
- * .where('job', 'like', '前端工程师')
- * .where('tags', 'exists')
- * .where('time', function (value) { return true })
+ * @param {String | Function} condition
+ * @param {String} relation {and(default) | or}
+ * @example
  *
- * name = smohan && age >= 20 && Obj.hasKey(tags) && 'job like 前端工程师' && 'time = func.call'
- */
-QP.where = function (field, expression, condition) {
-  _addWhere.call(this, field, expression, condition, 'and')
-  return this
-}
-
-
-/**
- * whereOr
- * @public
- * 字段
- * @param {String} field
- * 表达式
- * @param {String} expression
- * 条件
- * @param {Primitive} condition
- * 与上一个结果是并集关系(or)
- * eg.
- * query
- * .whereOr('job', 'like', '前端工程师')
- * .whereOr('time', function (value) { return true })
+ * 1. 普通
+ * author === 'smohan'
+ * .where('author', 'eq', 'smohan')
  *
- * 'job like 前端工程师' || 'time = func.call'
+ * 2. or
+ * author === 'smohan' || 'count.comments > 0'
+ * .where('author', 'eq', 'smohan')
+ * .where('count.comments', 'gt', 0, 'or')
+ *
+ * 3. 条件分组, 使用数组把多个条件分组，相当于把一组表达式用括号括起来作为一个整体
+ * author === 'smohan' && (title like 'javascript' || tags like 'javascript') && 'count.comments > 0'
+ * .where('author', 'eq', 'smohan')
+ * .where([['title', 'like', 'javascript'], ['tags', 'like', 'javascript', 'or'] ])
+ * .where('count.comments', 'gt', 0)
+ *
+ * 4. 函数表达式
+ * .where('author', function (value) {
+ *    return value === 'smohan' || value === '水墨寒'
+ * })
+ * .where('count.comments', function (value) {
+ *   return value > 3 && value < 10
+ * }, 'or')
+ *
+ * ...
  */
-QP.whereOr = function (field, expression, condition) {
-  _addWhere.call(this, field, expression, condition, 'or')
+QP.where = function (field, expression, condition, relation) {
+  // 如果是数组，其他参数将会被忽略
+  if (_.isArray(arguments[0])) {
+    // [[field, expression, condition, relation], [field, expression, condition, relation], ...]
+    let len = arguments[0].length
+    let i = -1
+    let whereGroups = []
+    while (++i < len) {
+      let where = arguments[0][i]
+      if (!_.isArray(where)) {
+        continue
+      }
+      let query = _adapterWhere.call(this, where[0], where[1], where[2], where[3])
+      if (query) {
+        whereGroups.push(query)
+      }
+    }
+    if (whereGroups.length) {
+      this.params.query.push(whereGroups)
+    }
+  } else {
+    let query = _adapterWhere.call(this, field, expression, condition, relation)
+    if (query) {
+      this.params.query.push(query)
+    }
+  }
   return this
 }
 
@@ -226,7 +254,7 @@ QP.whereOr = function (field, expression, condition) {
  * @public
  * @param {String | Object} field
  * @param {String | void} type
- * eg.
+ * @example
  * single
  * 可以保证优先级
  * query.sort('create_time', 'asc')
@@ -266,7 +294,7 @@ QP.sort = function (field, type) {
  * 获取一个匹配结果集的数量
  * @public
  * @returns {Number}
- * eg.
+ * @example
  * let query = new Query(data)
  *
  * query
@@ -283,7 +311,7 @@ QP.count = function () {
  * 获取一个匹配结果集的集合
  * @public
  * @returns {Array}
- * eg.
+ * @example
  * let query = new Query(data)
  *
  * query.where('name', 'eq', 'smohan')
@@ -422,42 +450,41 @@ QP.destroy = function () {
 
 
 /**
- * 统一处理where语句和whereOr语句
+ * where参数适配器
+ * 返回一个可用的where语句
  * @private
  * @param {String} field
  * @param {String} expression
- * @param {Primitive} condition
- * @param {String} relation [and | or]
+ * @param {String | Function} condition
+ * @param {String} relation
+ * @returns {Object | undefined}
  */
-function _addWhere (field, expression, condition, relation) {
+function _adapterWhere (field, expression, condition, relation) {
   if (!_.isString(field) || _.isEmpty(field)) {
-    return this
+    return
   }
-
-  // 如果参数2是个函数，则自动忽略参数3
   if (_.isFunction(expression)) {
     condition = expression
-    expression = 'custom' // lte
+    expression = 'custom'
+    relation = ~RELATIONS.indexOf(condition) ? condition : ~RELATIONS.indexOf(relation) ? relation : 'and'
   }
-
   // condition只能是基本类型或者函数
   if (!_.isFullPrimitive(condition) && !_.isFunction(condition)) {
-    throw new TypeError('Query: condition 必须是个基本类型值或者函数')
+    log('condition must be a primitive value or function')
+    return
   }
-
   expression = expression.toLocaleLowerCase()
   expression = ~EXPRESSIONS.indexOf(expression) ? expression : 'exists'
-
+  relation = ~RELATIONS.indexOf(relation) ? relation : 'and'
   const query = {
     _f: field,
     _c: condition,
     _e: expression,
-    _r: relation || 'and'
+    _r: relation
   }
   const queries = JSON.stringify(this.params.query)
-  console.log(queries, query)
   if (!~queries.indexOf(JSON.stringify(query))) {
-    this.params.query.push(query)
+    return query
   }
 }
 
@@ -476,11 +503,41 @@ function _parseWhere (data) {
     return true
   }
   let result = true
-  let query
+  let where
   let i = 0
   for (; i < len; i++) {
-    query = queries[i]
-    let { _f: field, _c: cond, _e: exp, _r: rel } = query
+    where = queries[i]
+    let whereGroup
+    // 将每一条where语句组装成一个where group
+    if (!_.isArray(where)) {
+      whereGroup = [where]
+    } else {
+      whereGroup = where
+    }
+    let res = getWhereGroupResult(whereGroup, data)
+    let rel = whereGroup[0]._r
+    // 上一个group的结果跟当前结果的逻辑关系
+    result = (rel === 'or') ? (result || res) : (result && res)
+  }
+
+  return result
+}
+
+
+/**
+ * 获取每一个whereGroup的结果
+ * @private
+ * @param {Array} whereGroup
+ * @param {Object} data
+ * @returns {Boolean}
+ */
+function getWhereGroupResult (whereGroup, data) {
+  let result = true
+  let i = -1
+  let len = whereGroup.length
+  while (++i < len) {
+    let where = whereGroup[i]
+    let { _f: field, _c: cond, _e: exp, _r: rel } = where
     let res
     // field exists
     if (exp === 'exists') {
@@ -496,10 +553,9 @@ function _parseWhere (data) {
         res = matchWhere(value, exp, cond)
       }
     }
-    // 上一个的结果跟其的并集或者交集
+    // 上一个where的结果跟当前结果的逻辑关系
     result = (rel === 'or') ? (result || res) : (result && res)
   }
-
   return result
 }
 
@@ -538,21 +594,27 @@ function matchWhere (value, expression, condition) {
       }
       break
     case 'neq':
+    case '<>':
       res = (value !== condition)
       break
     case 'lt':
+    case '<':
       res = (value < condition)
       break
     case 'lte':
+    case '<=':
       res = (value <= condition)
       break
     case 'gt':
+    case '>':
       res = (value > condition)
       break
     case 'gte':
+    case '>=':
       res = (value >= condition)
       break
     case 'eq':
+    case '=':
     default:
       res = (value === condition)
   }
@@ -715,31 +777,39 @@ function _query () {
 function _format (data) {
   let { params, options } = this
   if (params.format) {
-    for (let field in params.format) {
-      let format = params.format[field]
-      let value = _.getObjectValue(field, data)
-      let newValue = format.handler(value, ...format.args)
-      let parts = field.split('.')
-      let parentKey = (parts.slice(0, parts.length - 1)).join('.')
-      let curKey = parts[parts.length - 1]
-      let parentObj = data
-      if (parentKey) {
-        let parent = _.getObjectValue(parentKey, data)
-        if (_.isPlainObject(parent) || _.isArray(parent)) {
-          parentObj = parent
+    try {
+      for (let field in params.format) {
+        let format = params.format[field]
+        let value = _.getObjectValue(field, data)
+        let newValue = format.handler(value, ...format.args)
+        let parts = field.split('.')
+        let parentKey = (parts.slice(0, parts.length - 1)).join('.')
+        let curKey = parts[parts.length - 1]
+        let parentObj = data
+        if (parentKey) {
+          let parent = _.getObjectValue(parentKey, data)
+          if (_.isPlainObject(parent) || _.isArray(parent)) {
+            parentObj = parent
+          }
+        }
+        if (format.new) {
+          let newKey = options.newFieldNamePrefix + (_.isString(format.new) ? format.new : curKey)
+          parentObj[newKey] = newValue
+        } else {
+          parentObj[curKey] = newValue
         }
       }
-      if (format.new) {
-        let newKey = options.newFieldNamePrefix + (_.isString(format.new) ? format.new : curKey)
-        parentObj[newKey] = newValue
-      } else {
-        parentObj[curKey] = newValue
-      }
+    } catch (error) {
+      log(error)
     }
   }
   return data
 }
 
+
+function log (error) {
+  console.log('[QUERY ERROR]:', error)
+}
 
 
 export default Query
