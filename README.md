@@ -32,6 +32,8 @@ query.range(0, 10)
 ### to/format 
 ###### Description
 > `[Parameter Collections]` 通过内置钩子函数(hooks)对字段进行格式化。
+###### [Documents](https://github.com/S-mohan/query/blob/master/docs/format.md)
+###### [内置钩子函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 ###### Syntax
 ```javascript
 /**
@@ -47,10 +49,27 @@ query.to(field, type, options) / query.format(field, type, options)
 query.to('createTime', 'date', {args: ['yy-MM-dd'], new: 'date'})
 // $date: '2017-09-08'
 ```
-###### [Documents](https://github.com/S-mohan/query/blob/master/docs/format.md)
-###### [内置钩子函数](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 
-#### where
+### where
+###### Description
+> `[Parameter Collections]` 条件查询语句
+###### [Documents](https://github.com/S-mohan/query/blob/master/docs/where.md)
+###### Syntax
+```javascript
+/**
+ * @param {String} field 字段
+ * @param {String} expression 表达式
+ * @param {String | Function} condition 条件
+ * @param {String} relation {and(default) | or} 与上次where结构的关系
+ */
+query.where(field, expression, condition, relation)
+```
+###### Example
+```javascript
+query.where('author', 'eq', 'smohan')
+    .where([['title', 'like', 'javascript'], ['tags', 'like', 'javascript', 'or'] ])
+    .where('count.comments', 'gt', 0)
+```
 
 #### group
 
