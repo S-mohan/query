@@ -2,6 +2,7 @@
 
 > 类SQL前端数据查询类库
 
+## [Example](https://s-mohan.github.io/demo/query/)
 
 ## 如何使用
 ```javascript
@@ -16,6 +17,7 @@ var query = new Query(data)
 ### range
 ###### Description
 >`[Parameter Collections]` 从数据中选取一个从开始索引(start)到一个结束索引(end)之间的部分的浅拷贝出来作为目标对象，参数同Array.prototype.slice。多次调用以最后一次收集到的参数为准。
+
 ###### Syntax
 ```javascript
 /**
@@ -32,6 +34,7 @@ query.range(0, 10)
 ### to/format 
 ###### Description
 > `[Parameter Collections]` 通过内置钩子函数(hooks)对字段进行格式化。
+
 ###### [Document](https://github.com/S-mohan/query/blob/master/docs/format.md)
 ###### [内置钩子函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 ###### Syntax
@@ -53,6 +56,7 @@ query.to('createTime', 'date', {args: ['yy-MM-dd'], new: 'date'})
 ### where
 ###### Description
 > `[Parameter Collections]` 条件查询语句
+
 ###### [Document](https://github.com/S-mohan/query/blob/master/docs/where.md)
 ###### Syntax
 ```javascript
@@ -76,6 +80,7 @@ query
 ### group
 ###### Description
 > `[Parameter Collections]` 根据字段对结果集分组，返回新的结果集。一个字段只能分组一次。
+
 ###### Syntax
 ```javascript
 /**
@@ -98,6 +103,7 @@ query.group('author')
 ### skip
 ###### Description
 > `[Parameter Collections]` 用于分页时指定开始查询的起始行数。
+
 ###### Syntax
 ```javascript
 /**
@@ -113,6 +119,7 @@ query.skip(0)
 ### limit
 ###### Description
 > `[Parameter Collections]` 用于分页时指定查询的数量。
+
 ###### Syntax
 ```javascript
 /**
@@ -131,6 +138,7 @@ query.skip(5).limit(10)
 ### sort
 ###### Description
 > `[Parameter Collections]` 对查询结果进行排序，输出排序后的结果。
+
 ###### Syntax
 ```javascript
 /**
@@ -156,6 +164,7 @@ query.sort({
 ### count
 ###### Description
 > `[Export results]` 返回经过查询后的结果的总数，如果需要分页，建议在分页前调用该方法。
+
 ###### Syntax
 ```javascript
 /**
@@ -170,6 +179,7 @@ query.count()
 ### find
 ###### Description
 > `[Export results]` 返回经过查询后的结果集。
+
 ###### Syntax
 ```javascript
 /**
@@ -184,6 +194,7 @@ query.find()
 ### reset
 ###### Description
 > 对数据集和查询条件进行重置。一旦调用`find()`/`count()`方法后，目标集合将会被改变，此时如果需要对源数据进行重新查询，需要调用该方法。
+
 ###### Syntax
 ```javascript
 query.reset()
@@ -198,6 +209,7 @@ query.reset()
 ### destroy
 ###### Description
 > 销毁实例
+
 ###### Syntax
 ```javascript
 query.destroy()
@@ -207,6 +219,7 @@ query.destroy()
 ### hooks
 ###### Description
 > `[Static Method]` 添加自定义格式化钩子函数
+
 ###### Syntax
 ```javascript
 /**
@@ -230,6 +243,7 @@ query.to('title', 'myTitle', {new: true})
 ### version
 ###### Description
 > `[Static Attribute]` 版本号
+
 ###### Syntax
 ```javascript
 Query.version
