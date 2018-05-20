@@ -220,6 +220,7 @@ query.destroy()
 ###### Description
 > `[Static Method]` 添加自定义格式化钩子函数
 
+###### [内置钩子函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 ###### Syntax
 ```javascript
 /**
