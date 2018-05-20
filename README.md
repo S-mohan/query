@@ -33,15 +33,15 @@ query.range(0, 10)
 
 ### to/format 
 ###### Description
-> `[Parameter Collections]` 通过内置钩子函数(hooks)对字段进行格式化。
+> `[Parameter Collections]` 通过内置格式化函数(hooks)对字段进行格式化。
 
 ###### [Document](https://github.com/S-mohan/query/blob/master/docs/format.md)
-###### [内置钩子函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
+###### [内置格式化函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 ###### Syntax
 ```javascript
 /**
  * @param {String} field 待格式化字段
- * @param {String} type 钩子函数名称
+ * @param {String} type 格式化函数名称
  * @param {Object} options 可用配置项
  */
 query.to(field, type, options) / query.format(field, type, options)
@@ -218,9 +218,9 @@ query.destroy()
 ## 静态方法/属性
 ### hooks
 ###### Description
-> `[Static Method]` 添加自定义格式化钩子函数
+> `[Static Method]` 添加自定义格式化函数
 
-###### [内置钩子函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
+###### [内置格式化函数(format hooks)](https://github.com/S-mohan/query/blob/master/docs/hooks.md)
 ###### Syntax
 ```javascript
 /**
@@ -231,7 +231,7 @@ Query.hooks(name, handler)
 ```
 ###### Example
 ```javascript
-// 添加一个重置标题的钩子函数
+// 添加一个重置标题的格式化函数
 Query.hooks('myTitle', function(value) {
   return '我是格式化后的标题:' + value
 })
