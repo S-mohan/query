@@ -4,11 +4,11 @@
 ### date
 > 将一个字段的值格式化为指定的日期格式
 
-#### example
+##### example
 ```javascript
 query.to('createTime', 'date', {args: ['yy-MM-dd']})
 ```
-#### args: datetime Type
+##### args: datetime Type
 - `y / yy` : year/fullYear, '18'/'2018'
 - `M / MM`: month/fullMonth, '5'/'05'
 - `d / dd`: day/fullDay, '9'/'09'
@@ -20,7 +20,7 @@ query.to('createTime', 'date', {args: ['yy-MM-dd']})
 ### number
 > 将一个字段的值格式化为数字
 
-#### example
+##### example
 ```javascript
 // views: '30'
 query.to('views', 'number')
@@ -30,7 +30,7 @@ query.to('views', 'number')
 ### int
 > 将一个字段的值格式化为整数
 
-#### example
+##### example
 ```javascript
 // price: 30.25
 query.to('price', 'int')
@@ -40,7 +40,7 @@ query.to('price', 'int')
 ### zero
 > 将一个字段的空值('', null, undefined, false, 0)格式化为 0
 
-#### example
+##### example
 ```javascript
 // price: null
 query.to('price', 'zero')
@@ -50,7 +50,7 @@ query.to('price', 'zero')
 ### boolean
 > 将一个字段的空值('', null, undefined, false, 0)格式化为 false, 非空值转换为 true
 
-#### example
+##### example
 ```javascript
 // read: null
 // updated: 1
@@ -63,7 +63,7 @@ query.to('updated', 'boolean')
 ### string
 > 将一个字段的值转化为字符串
 
-#### example
+##### example
 ```javascript
 // views: 10
 query.to('views', 'string')
@@ -73,7 +73,7 @@ query.to('views', 'string')
 ### lower
 > 将一个字段的值转化为小写
 
-#### example
+##### example
 ```javascript
 // author: 'SMOHAN'
 query.to('author', 'lower')
@@ -83,7 +83,7 @@ query.to('author', 'lower')
 ### upper
 > 将一个字段的值转化为大写
 
-#### example
+##### example
 ```javascript
 // author: 'smohan'
 query.to('author', 'upper')

@@ -8,7 +8,7 @@
 ```javascript
 query.to(field, type, options)
 ```
-#### arguments
+##### arguments
 - `field` : {String} 需要格式化的字段
 - `type`  : {String} 指定格式化方式（内置的钩子函数或者自定义的钩子函数名称）
 - `options`: {Object} 可用的配置项
@@ -19,7 +19,7 @@ query.to(field, type, options)
      - `string`: 生成新字段，保留原字段。使用指定的名称来生成一个新字段，新字段会被自动添加`$`前缀，如 `customTitle` => `$customTitle`
   - `handler`: {Function | null} 局部钩子函数，该钩子函数仅对当前使用有效，缺省值为 `null`
 
-### example
+##### example
 
 ```javascript
 var sourceData = [
