@@ -17,7 +17,7 @@ query.to(field, type, options)
      - `false`: 不生成新字段，直接使用格式化后的值重置原字段
      - `true`: 生成新字段，保留原字段。新字段被标识为`$原字段名`，如 `title` => `$title`
      - `string`: 生成新字段，保留原字段。使用指定的名称来生成一个新字段，新字段会被自动添加`$`前缀，如 `customTitle` => `$customTitle`
-  - `handler`: {Function | null} 私有钩子函数，该钩子函数仅对当前使用有效，缺省值为 `null`
+  - `handler`: {Function | null} 局部钩子函数，该钩子函数仅对当前使用有效，缺省值为 `null`
 
 ### example
 
@@ -38,6 +38,7 @@ var query = new Query(sourceData)
 query
 .to('createAt', 'date', {args: ['yy-MM'], new: 'myDate'})
 .find() 
+
 // [
 //   {
 //     title: 'title',
@@ -47,16 +48,16 @@ query
 //   }
 // ]
 
+// 1.2 不生成新字段
 query
 .to('createAt', 'number', {new: false})
 .find()
 
-// 1.2 不生成新字段
 // [
 //   {
 //     title: 'title',
 //     createAt: '2017-09-20T13:14:06.312Z',
-//     views: 322
+//     views: 322 // 字符串被转换为数字
 //   }
 // ]
 
@@ -81,7 +82,6 @@ query
 // ]
 
 // 2.2 使用局部钩子函数
-
 query
 .to('title', null, {new: true, handler(value) {
   return '使用局部钩子函数格式化的' + value

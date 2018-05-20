@@ -40,8 +40,7 @@ const getDateMap = date => {
     h: date.getHours(),
     m: date.getMinutes(),
     s: date.getSeconds(),
-    q: Math.floor((date.getMonth() + 3) / 3), // 季度
-    S: date.getMilliseconds() // 毫秒
+    q: Math.floor((date.getMonth() + 3) / 3) // 季度
   }
 }
 
@@ -112,7 +111,8 @@ const toZero = value => {
 
 
 /**
- * 将空字符串，null, undefined 等转换为 false
+ * 将空字符串，null, undefined 等转换为 false,
+ * 其他值转换为TRUE
  * @param {any} value 
  * @returns {Boolean}
  */
