@@ -61,7 +61,7 @@ query.to('updated', 'boolean')
 ```
 
 ### string
-> 将一个字段的转化为字符串
+> 将一个字段的值转化为字符串
 
 #### example
 ```javascript
@@ -71,7 +71,7 @@ query.to('views', 'string')
 ```
 
 ### lower
-> 将一个字段的转化为小写
+> 将一个字段的值转化为小写
 
 #### example
 ```javascript
@@ -81,7 +81,7 @@ query.to('author', 'lower')
 ```
 
 ### upper
-> 将一个字段的转化为大写
+> 将一个字段的值转化为大写
 
 #### example
 ```javascript
