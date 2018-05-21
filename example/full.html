@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Query Example</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    .data-list {
+      margin: 50px;
+      font-size: 14px;
+      font-family: -apple-system,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Helvetica Neue,Arial,sans-serif;
+    }
+    .data-list .data-list__head {
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .data-list__head .search-wrap {
+      float: left;
+    }
+    .data-list__head .sort-wrap {
+      float: right;
+      font-size: 0
+    }
+    .sort-wrap button {
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 12px;
+      background-color: transparent;
+      border: 1px solid #dedede;
+      padding: 6px 15px 4px 15px;
+      line-height: 20px;
+      margin-left: -1px;
+      cursor: pointer;
+      position: relative;
+    }
+    .sort-wrap button:hover,
+    .sort-wrap button:active,
+    .sort-wrap button:focus,
+    .sort-wrap button.active {
+      z-index: 1;
+      border-color: #43a3fb;
+    }
+    .sort-wrap button.active{
+      background-color: #43a3fb;
+      color: #fff;
+    }
+    .data-list .data-list__table {
+      width: 100%;
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    .data-list__table td,
+    .data-list__table th{
+      border-bottom: 1px solid #dedede;
+      padding: 10px;
+      text-align: left;
+    }
+    .data-list__table td.eof{
+      padding: 20px;
+      text-align: center;
+      color: #f00;
+      border-bottom: none;
+    }
+    .data-list__foot {
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .page-infos{
+      float: left;
+      font-size: 12px;
+      margin: 5px 0 5px 0;
+      padding: 7px 0;
+      line-height: 1;
+    }
+    .pagination {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0;
+      text-align: right;
+      float: right;
+    }
+    .pagination li {
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 12px;
+      margin: 5px 0 5px 5px;
+      padding: 7px 10px;
+      line-height: 1;
+      border: 1px solid #dedede;
+      cursor: pointer;
+    }
+    .pagination li:hover{
+      border-color: #43a3fb;
+      color: #43a3fb;
+    }
+    .pagination li.active{
+      border-color: #43a3fb;
+      background-color: #43a3fb;
+      color: #fff;
+    }
+    .search-input{
+      display: inline-block;
+      width: 200px;
+      padding: 6px 10px 4px 10px;
+      line-height: 20px;
+      border: 1px solid #dedede;
+    }
+    .search-btn {
+      display: inline-block;
+      border: 1px solid #43a3fb;
+      background-color: #43a3fb;
+      padding: 6px 15px 4px 15px;
+      line-height: 20px;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="data-list">
+    <div class="data-list__head">
+      <div class="search-wrap">
+        <input type="text" class="search-input" placeholder="标题/标签/作者" maxlength="20" id="keyword">
+        <button class="search-btn" id="search">搜索</button>
+      </div>
+      <div class="sort-wrap" id="sort">
+        <button class="active" data-value="">默认</button>
+        <button data-value="createTime">创建时间  ↓</button>
+        <button data-value="count.views">阅读数 ↓</button>
+      </div>
+    </div>
+    <table class="data-list__table">
+      <thead>
+        <tr>
+          <th width="15%">id</th>
+          <th width="30%">标题</th>
+          <th width="10%">作者</th>
+          <th width="20%">标签</th>
+          <th width="10%">阅读数</th>
+          <th width="15%">创建时间</th>
+        </tr>
+      </thead>
+      <tbody id="list">
+        <tr><td colspan="6"></td></tr>
+      </tbody>
+    </table>
+    <div class="data-list__foot">
+      <div class="page-infos" id="paginationInfo"></div>
+      <ul class="pagination" id="pagination"></ul>
+    </div>
+  </div>
+   
+  <script type="text/template" id="tpl-list">
+    <tr>
+      <td>{id}</td>
+      <td>{title}</td>
+      <td>{author}</td>
+      <td>{tags}</td>
+      <td>{views}</td>
+      <td>{createTime}</td>
+    </tr>
+  </script>
+  <script type="text/template" id="tpl-page">
+    <li class="{className}" data-page="{page}">{page}</li>
+  </script>
+
+
+  <script src="./query.js"></script>
+  <script src="./data.js"></script>
+  <script src="./full.js"></script>
+</body>
+</html>
