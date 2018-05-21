@@ -2,7 +2,7 @@
 
 > 类SQL前端数据查询类库
 
-## [Example]
+## Example
 #### [example 1: SQl组装](https://s-mohan.github.io/demo/query/)
 #### [example 2: 数据列表](https://s-mohan.github.io/demo/query/full.html)
 
