@@ -210,10 +210,10 @@ QP.limit = function (limit) {
  * .where('count.comments', 'gt', 0)
  *
  * 4. 函数表达式
- * .where('author', function (value) {
+ * .where('author', 'eq', function (value) {
  *    return value === 'smohan' || value === '水墨寒'
  * })
- * .where('count.comments', function (value) {
+ * .where('count.comments', 'eq', function (value) {
  *   return value > 3 && value < 10
  * }, 'or')
  *
